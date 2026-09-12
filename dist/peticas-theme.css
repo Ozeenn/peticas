@@ -1,18 +1,6 @@
 /* Peticas: stronger brand surfaces, with quiet areas for reading. */
-:root{--bg:#e5f1fb;--line:#ccdfef;--muted:#536980}
+:root{--bg:#f5f7fb;--line:#ccdfef;--muted:#536980}
 body{background:var(--bg)}
-.sidebar{background:#092d80;color:#fff;border-right:0}
-.sidebar .brand{background:white;border-radius:14px;padding:12px 9px;margin-bottom:24px}
-.sidebar .brand small{color:#536980}
-.nav-label{color:#a9c9ed}
-.nav-btn{color:#d4e5ff}
-.nav-btn:hover{background:#ffffff14;color:white}
-.nav-btn.active{background:#00afe6;color:#04245b;box-shadow:0 5px 15px #001f4e30}
-.nav-btn.active:before{background:#ffdd21}
-.nav-count{background:#ffdd21;color:#593b00}
-.side-note{background:#12438f;color:#d4e5ff;border:1px solid #3960a1;border-top:3px solid #ed007b}
-.side-note strong{color:#ffdd21}
-.profile{border-color:#3a5997}.profile small{color:#b9d3f5}.profile .avatar{background:#00afe6;color:#04245b}
 .topbar{background:#d1e8fa;border-color:#bdd8ee}
 .welcome{background:#093782;border:1px solid #104991;border-bottom:5px solid #00afe6;box-shadow:0 10px 22px #092d8010}
 .welcome .btn{background:#ffdd21;color:#092d80}
@@ -56,4 +44,4 @@ th{background:#cde4f5;color:#365477}td{background:#f1f7fc}tr:nth-child(even) td{
 dialog{background:#eef6fc}.modal-head{background:#cde7f8;border-bottom:3px solid #00afe6;color:var(--navy)}
 .modal-head .close{background:#ffffffa6;color:var(--navy)}
 .footer{border-color:#accbe3;color:#49647f}
-@media(max-width:720px){.sidebar{border-bottom:3px solid #00afe6}.nav-btn{color:#e2efff}.nav-btn.active{color:#04245b}.topbar{background:#d1e8fa}.public-header .brand{padding:4px 6px}.public-header{gap:8px}.public-actions{gap:5px}.public-header .brand small{display:none}.public-header .brand strong{font-size:17px}.public-header .brand img{width:34px;height:34px}}
+@media(max-width:720px){.topbar{background:#d1e8fa}.public-header .brand{padding:4px 6px}.public-header{gap:8px}.public-actions{gap:5px}.public-header .brand small{display:none}.public-header .brand strong{font-size:17px}.public-header .brand img{width:34px;height:34px}}
