@@ -1,0 +1,59 @@
+/* Peticas: stronger brand surfaces, with quiet areas for reading. */
+:root{--bg:#e5f1fb;--line:#ccdfef;--muted:#536980}
+body{background:var(--bg)}
+.sidebar{background:#092d80;color:#fff;border-right:0}
+.sidebar .brand{background:white;border-radius:14px;padding:12px 9px;margin-bottom:24px}
+.sidebar .brand small{color:#536980}
+.nav-label{color:#a9c9ed}
+.nav-btn{color:#d4e5ff}
+.nav-btn:hover{background:#ffffff14;color:white}
+.nav-btn.active{background:#00afe6;color:#04245b;box-shadow:0 5px 15px #001f4e30}
+.nav-btn.active:before{background:#ffdd21}
+.nav-count{background:#ffdd21;color:#593b00}
+.side-note{background:#12438f;color:#d4e5ff;border:1px solid #3960a1;border-top:3px solid #ed007b}
+.side-note strong{color:#ffdd21}
+.profile{border-color:#3a5997}.profile small{color:#b9d3f5}.profile .avatar{background:#00afe6;color:#04245b}
+.topbar{background:#d1e8fa;border-color:#bdd8ee}
+.welcome{background:#093782;border:1px solid #104991;border-bottom:5px solid #00afe6;box-shadow:0 10px 22px #092d8010}
+.welcome .btn{background:#ffdd21;color:#092d80}
+.stat{border:1px solid #b4daee;border-top:4px solid #00afe6;background:#cceffa}
+.stat:nth-child(2){background:#ffdeed;border-color:#f3bfd7;border-top-color:#ed007b}
+.stat:nth-child(3){background:#fff0ac;border-color:#e9d889;border-top-color:#dfb900}
+.stat:nth-child(4){background:#d9e4ff;border-color:#b7ccef;border-top-color:#2955b3}
+.stat strong{color:var(--navy)}.stat-top,.stat small{color:#425b76}
+.stat .stat-icon{background:#ffffff80}
+.panel{background:#f3f9fd;box-shadow:0 5px 14px #092d8006}
+.panel-head{background:#cdebf7;border-bottom:1px solid #bcddec}
+.columns>.panel:nth-child(2) .panel-head{background:#fbdce9;border-bottom-color:#edc5d8}
+.panel-head h2{color:var(--navy)}
+.row{background:#f3f9fd}.row:nth-child(odd){background:#eaf4fb}
+.cat{background:#e3f3fb;border-color:#bcd9ec;box-shadow:0 5px 15px #092d8008}
+.cat:nth-child(3n+2){background:#fff0f6;border-color:#ecc9da}
+.cat:nth-child(3n){background:#fff9dd;border-color:#e4dbaf}
+.cat-title h3{color:var(--navy)}
+.cat .tag{background:#ffffffb3;color:#415c78}
+.cat-foot{border-color:#b8d6e5}
+.cat:nth-child(3n+2) .cat-foot{border-color:#edcddd}
+.cat:nth-child(3n) .cat-foot{border-color:#e4dbaa}
+.btn.soft{background:#c6eafa;color:#09376e}
+.cat .btn.soft{background:#092d80;color:white}
+.tabs{border-bottom-color:#b7d0e7}.tab.active{background:#d3eafa;border-radius:10px 10px 0 0}
+th{background:#cde4f5;color:#365477}td{background:#f1f7fc}tr:nth-child(even) td{background:#e5f1fa}
+.notice{background:#cfeaf8;border-left:4px solid #00afe6;color:#224d6e}
+.application{background:#eaf5fc;border-top:4px solid #00afe6}
+.application:nth-child(3n+2){background:#ffedf5;border-top-color:#ed007b}
+.application:nth-child(3n){background:#fff7d5;border-top-color:#e0bc00}
+.public-header{background:#092d80;border-bottom:4px solid #00afe6}
+.public-header .brand{background:white;border-radius:12px;padding:5px 12px}
+.public-header .btn.secondary{background:#17468f;color:white;border-color:#6081bb}
+.public-header .btn.soft{background:#00afe6;color:#04245b}
+.hero{background:#bfeaf8;border:1px solid #a4d9ed}
+.step{background:#cfeef9;border-color:#acdaec;border-top:4px solid #00afe6}
+.step:nth-child(2){background:#ffe0ef;border-color:#f0bed5;border-top-color:#ed007b}
+.step:nth-child(3){background:#fff1b4;border-color:#e2d493;border-top-color:#d5b400}
+.step:nth-child(4){background:#dbe5ff;border-color:#b7c9ef;border-top-color:#2955b3}
+.step strong{color:var(--navy)}.step p{color:#475b72}
+dialog{background:#eef6fc}.modal-head{background:#cde7f8;border-bottom:3px solid #00afe6;color:var(--navy)}
+.modal-head .close{background:#ffffffa6;color:var(--navy)}
+.footer{border-color:#accbe3;color:#49647f}
+@media(max-width:720px){.sidebar{border-bottom:3px solid #00afe6}.nav-btn{color:#e2efff}.nav-btn.active{color:#04245b}.topbar{background:#d1e8fa}.public-header .brand{padding:4px 6px}.public-header{gap:8px}.public-actions{gap:5px}.public-header .brand small{display:none}.public-header .brand strong{font-size:17px}.public-header .brand img{width:34px;height:34px}}
