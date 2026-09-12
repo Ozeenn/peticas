@@ -31,10 +31,10 @@ th{background:#cde4f5;color:#365477}td{background:#f1f7fc}tr:nth-child(even) td{
 .application{background:#eaf5fc;border-top:4px solid #00afe6}
 .application:nth-child(3n+2){background:#ffedf5;border-top-color:#ed007b}
 .application:nth-child(3n){background:#fff7d5;border-top-color:#e0bc00}
-.public-header{background:#092d80;border-bottom:4px solid #00afe6}
+.public-header{background:#fff;border-bottom:1px solid #e6ebf1}
 .public-header .brand{background:white;border-radius:12px;padding:5px 12px}
-.public-header .btn.secondary{background:#17468f;color:white;border-color:#6081bb}
-.public-header .btn.soft{background:#00afe6;color:#04245b}
+.public-header .btn.secondary{background:#fff;color:#1d2c47;border-color:#e6ebf1}
+.public-header .btn.soft{background:#eaf3ff;color:#092d80}
 .hero{background:#bfeaf8;border:1px solid #a4d9ed}
 .step{background:#cfeef9;border-color:#acdaec;border-top:4px solid #00afe6}
 .step:nth-child(2){background:#ffe0ef;border-color:#f0bed5;border-top-color:#ed007b}
