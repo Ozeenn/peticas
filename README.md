@@ -30,3 +30,5 @@ Notificações aparecem dentro do sistema. Não há envio de WhatsApp/e-mail ou 
 `pnpm test`: testes integrados com SQLite real. `pnpm build`: gera Worker, assets e migrações. `public/` é a fonte da interface; `server/` contém a API; `drizzle/` contém migrações versionadas e imutáveis após publicação. A hospedagem aplica as migrações antes do Worker.
 
 Logo fornecida pelo usuário. Fotos ilustrativas: River Fx, Sergei Karakulov e Meaghan Cafferty / Unsplash.
+
+Recuperação de senha: use Esqueci minha senha com e-mail e código privado. Minha conta permite gerar um código mediante confirmação da senha atual. No primeiro uso do administrador, a chave ADMIN_SETUP_KEY serve como código inicial. Cada redefinição invalida o código anterior e todas as sessões; o novo código é mostrado uma vez. Apenas o hash do código fica em settings. Não há envio de e-mail nesta versão. O banco SQLite local e o D1 de produção são independentes.

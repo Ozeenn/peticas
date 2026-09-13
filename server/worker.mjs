@@ -40,7 +40,28 @@ async function api(req,env){const url=new URL(req.url),path=url.pathname,method=
  if(path==='/api/cats'&&method==='GET'){const s=await getState(env);return json({cats:s.cats.filter(c=>c.status==='Disponível')});}
  if(path==='/api/adoptions'&&method==='POST'){await limit(env,'adoption:'+ip,5);const b=await body(req);if(!b.answers||typeof b.answers!=='object')fail(400,'Preencha a entrevista.');const answers={};for(const [k,v] of Object.entries(b.answers)){if(!/^[a-zA-Z]+$/.test(k)||typeof v!=='string'||v.length>2500)fail(400,'Resposta inválida.');answers[k]=v;}const name=text(answers.name,100);if(!answers.address||!answers.security)fail(400,'Complete a entrevista.');const state=await getState(env);const cat=b.cat===null?null:Number(b.cat);if(cat!==null&&!state.cats.some(c=>c.id===cat&&c.status==='Disponível'))fail(409,'Este gato não está disponível. Atualize a página.');const requestId=id(),token=bytesToHex(crypto.getRandomValues(new Uint8Array(32))),data={id:requestId,name,cat,stage:0,date:new Date().toLocaleDateString('pt-BR'),answers,guidance:'Recebemos sua candidatura. Aguarde o contato da equipe.',note:'Entrevista recebida pelo site.'};await run(env,'INSERT INTO adoption_requests(id,token_hash,data,created) VALUES (?,?,?,?)',requestId,await hash(token),JSON.stringify(data),now());return json({token,request:{id:requestId,name,cat,stage:0,guidance:data.guidance}},201);}
  if(path==='/api/tracking'&&method==='POST'){await limit(env,'tracking:'+ip,60);const b=await body(req),r=await first(env,'SELECT data FROM adoption_requests WHERE token_hash=?',await hash(text(b.token,100)));if(!r)fail(404,'Link de acompanhamento inválido.');const a=JSON.parse(r.data);return json({request:{id:a.id,name:a.name,cat:a.cat,stage:a.stage,guidance:a.guidance}});}
+ if(path==='/api/reset-password'&&method==='POST'){
+  await limit(env,'recovery:'+ip,5);const b=await body(req),email=text(b.email,254).toLowerCase();await limit(env,'recovery-email:'+email,5);
+  if(typeof b.password!=='string'||b.password.length<12||b.password.length>128)fail(400,'Use uma senha de 12 a 128 caracteres.');
+  const u=await first(env,'SELECT * FROM users WHERE email=?',email),provided=await hash(text(b.code,256));
+  const saved=u?await first(env,'SELECT value FROM settings WHERE key=?','recovery:'+u.id):null;
+  const expected=saved?.value||(u?.role==='admin'&&env.ADMIN_SETUP_KEY?await hash(env.ADMIN_SETUP_KEY):'');
+  if(!u||!expected||!equal(provided,expected))fail(400,'E-mail ou código de recuperação inválido.');
+  const code=bytesToHex(crypto.getRandomValues(new Uint8Array(32))),password=await passwordHash(b.password);
+  const result=await env.DB.batch([
+   statement(env,"UPDATE users SET password=? WHERE id=? AND password=? AND COALESCE((SELECT value FROM settings WHERE key=?),?)=?",password,u.id,u.password,'recovery:'+u.id,expected,provided),
+   statement(env,"INSERT INTO settings(key,value,version) SELECT ?,?,1 WHERE changes()=1 ON CONFLICT(key) DO UPDATE SET value=excluded.value,version=version+1",'recovery:'+u.id,await hash(code)),
+   statement(env,'DELETE FROM sessions WHERE user_id=? AND changes()=1',u.id)
+  ]);
+  if(!result[0].meta.changes)fail(409,'O código já foi usado. Use o código mais recente.');return json({ok:true,recoveryCode:code});
+ }
  const user=await getUser(req,env);requireStaff(user);
+ if(path==='/api/recovery-code'&&method==='POST'){
+  await limit(env,'recovery-generate:'+user.id,5);const b=await body(req);
+  if(typeof b.current!=='string'||b.current.length>128||!equal(await passwordHash(b.current,user.password.split(':')[0]),user.password))fail(400,'Senha atual incorreta.');
+  const code=bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
+  await run(env,'INSERT INTO settings(key,value,version) VALUES(?,?,1) ON CONFLICT(key) DO UPDATE SET value=excluded.value,version=version+1','recovery:'+user.id,await hash(code));return json({recoveryCode:code});
+ }
  if(path==='/api/password'&&method==='POST'){await limit(env,'password:'+user.id,5);const b=await body(req);if(typeof b.current!=='string'||typeof b.password!=='string'||b.password.length<12||b.password.length>128)fail(400,'Use uma nova senha de 12 a 128 caracteres.');if(!equal(await passwordHash(b.current,user.password.split(':')[0]),user.password))fail(401,'Senha atual incorreta.');await env.DB.batch([statement(env,'UPDATE users SET password=? WHERE id=?',await passwordHash(b.password),user.id),statement(env,'DELETE FROM sessions WHERE user_id=?',user.id)]);return loginSession(req,env,user);}
  if(path==='/api/users'&&method==='GET'){requireAdmin(user);return json({users:await rows(env,'SELECT id,name,email,role,created FROM users ORDER BY created DESC')});}
  if(path.startsWith('/api/users/')&&method==='PATCH'){requireAdmin(user);const target=path.split('/').pop(),b=await body(req);if(!['staff','pending','blocked'].includes(b.role))fail(400,'Perfil inválido.');await env.DB.batch([statement(env,"UPDATE users SET role=? WHERE id=? AND role<>'admin'",b.role,target),statement(env,'DELETE FROM sessions WHERE user_id=?',target)]);return json({ok:true});}

@@ -38,5 +38,16 @@ test('Persistent stock, approval, authorization, alerts and purchase receipt',as
  for(const stage of [1,2,3]){const res=await request('adoptions/'+a.id,{method:'PATCH',cookie:admin.cookie,data:{cat:1,stage,guidance:'Orientação teste',version:stage}});assert.equal(res.status,200,JSON.stringify(res.body));}
  assert.equal((await request('cats')).body.cats.some(c=>c.id===1),false);
  await request('logout',{method:'POST',cookie:staff.cookie,data:{}});assert.equal((await request('inventory',{cookie:staff.cookie})).status,401);
+ const resetData={email:'owner@example.test',code:env.ADMIN_SETUP_KEY,password:'Nova-senha-teste-456'};
+ assert.equal((await request('reset-password',{method:'POST',data:{...resetData,code:'wrong'}})).status,400);
+ assert.equal((await request('reset-password',{method:'POST',origin:'https://evil.test',data:resetData})).status,403);
+ const reset=await request('reset-password',{method:'POST',data:resetData});assert.equal(reset.status,200);assert.equal(reset.body.recoveryCode.length,64);
+ assert.equal((await request('inventory',{cookie:admin.cookie})).status,401);
+ assert.equal((await request('reset-password',{method:'POST',data:resetData})).status,400);
+ assert.equal((await request('login',{method:'POST',data:{email:resetData.email,password:'Senha-de-teste-123'}})).status,401);
+ const restored=await request('login',{method:'POST',data:{email:resetData.email,password:resetData.password}});assert.equal(restored.status,200);assert.equal(restored.body.user.role,'admin');
+ const rotated=await request('recovery-code',{method:'POST',cookie:restored.cookie,data:{current:resetData.password}});assert.equal(rotated.status,200);
+ assert.equal((await request('reset-password',{method:'POST',data:{...resetData,code:reset.body.recoveryCode}})).status,400);
+ assert.equal((await request('reset-password',{method:'POST',data:{...resetData,code:rotated.body.recoveryCode}})).status,200);
  db.close();
 });
