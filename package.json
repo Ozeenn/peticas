@@ -1,0 +1,13 @@
+{
+  "name": "peticas",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node server/local.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": { "@noble/hashes": "1.8.0" },
+  "devDependencies": { "drizzle-kit": "0.31.4", "drizzle-orm": "0.44.5", "esbuild": "0.25.9" }
+}

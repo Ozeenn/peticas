@@ -1,0 +1,125 @@
+{
+  "cats": [
+    {
+      "id": 1,
+      "name": "Luna",
+      "age": "2 anos",
+      "sex": "Fêmea",
+      "personality": "Carinhosa e tranquila",
+      "tags": [
+        "Carinhosa",
+        "Boa com gatos"
+      ],
+      "photo": 0,
+      "status": "Disponível",
+      "story": "Adora um cantinho de sol e companhia no sofá. Está pronta para conhecer uma família paciente e cheia de carinho."
+    },
+    {
+      "id": 2,
+      "name": "Paçoca",
+      "age": "8 meses",
+      "sex": "Macho",
+      "personality": "Curioso e brincalhão",
+      "tags": [
+        "Brincalhão",
+        "Sociável"
+      ],
+      "photo": 1,
+      "status": "Disponível",
+      "story": "Todo brinquedo vira uma aventura para o Paçoca. Gosta de explorar e depois dormir pertinho de alguém."
+    },
+    {
+      "id": 3,
+      "name": "Chico",
+      "age": "3 anos",
+      "sex": "Macho",
+      "personality": "Companheiro e observador",
+      "tags": [
+        "Tranquilo",
+        "Independente"
+      ],
+      "photo": 2,
+      "status": "Disponível",
+      "story": "Chico conquista aos poucos. Com uma rotina tranquila, mostra seu lado mais carinhoso."
+    },
+    {
+      "id": 4,
+      "name": "Nina",
+      "age": "1 ano",
+      "sex": "Fêmea",
+      "personality": "Doce e um pouco tímida",
+      "tags": [
+        "Delicada",
+        "Lar tranquilo"
+      ],
+      "photo": 0,
+      "status": "Em tratamento",
+      "story": "Nina está recebendo cuidados da equipe. Gosta de carinho e precisa de tempo para confiar."
+    },
+    {
+      "id": 5,
+      "name": "Bento",
+      "age": "4 anos",
+      "sex": "Macho",
+      "personality": "Afetuoso e sossegado",
+      "tags": [
+        "Dócil",
+        "Companheiro"
+      ],
+      "photo": 1,
+      "status": "Reservado",
+      "story": "Um companheiro para os dias tranquilos. Já está com uma candidatura aprovada."
+    },
+    {
+      "id": 6,
+      "name": "Amora",
+      "age": "6 meses",
+      "sex": "Fêmea",
+      "personality": "Esperta e cheia de energia",
+      "tags": [
+        "Ativa",
+        "Curiosa"
+      ],
+      "photo": 2,
+      "status": "Disponível",
+      "story": "Amora adora brincar e descobrir lugares novos. Procura um lar seguro com bastante enriquecimento ambiental."
+    }
+  ],
+  "vaccines": [
+    {
+      "cat": 1,
+      "label": "Vacina • reforço",
+      "date": "Hoje, 12 set.",
+      "status": "Hoje",
+      "done": false
+    },
+    {
+      "cat": 2,
+      "label": "Vacina • próxima dose",
+      "date": "11 set.",
+      "status": "Atrasada",
+      "done": false
+    },
+    {
+      "cat": 3,
+      "label": "Vacina • reforço",
+      "date": "15 set.",
+      "status": "Próxima",
+      "done": false
+    }
+  ],
+  "meds": [
+    {
+      "cat": 4,
+      "label": "Tratamento de Nina",
+      "time": "08:00",
+      "done": true
+    },
+    {
+      "cat": 4,
+      "label": "Tratamento de Nina",
+      "time": "20:00",
+      "done": false
+    }
+  ]
+}

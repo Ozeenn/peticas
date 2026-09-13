@@ -1,0 +1,42 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { openDB } from '../server/local-db.mjs';
+import worker from '../server/worker.mjs';
+const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'peticas-test-'));
+const file=path.join(tmp,'test.sqlite');
+let db=openDB(file);
+const env={DB:db,ADMIN_SETUP_KEY:'test-bootstrap-secret-only'};
+async function request(route,{method='GET',data,cookie='',origin='https://test.peticas'}={}){const response=await worker.fetch(new Request('https://test.peticas/api/'+route,{method,headers:{'Content-Type':'application/json',Origin:origin,Cookie:cookie},...(data?{body:JSON.stringify(data)}:{})}),env);return {status:response.status,body:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};}
+test('Persistent stock, approval, authorization, alerts and purchase receipt',async()=>{
+ assert.equal((await request('inventory')).status,401);
+ const admin=await request('register',{method:'POST',data:{name:'Responsável Teste',email:'owner@example.test',password:'Senha-de-teste-123',setupKey:env.ADMIN_SETUP_KEY}});assert.equal(admin.status,200);assert.equal(admin.body.user.role,'admin');assert.match(admin.cookie,/__Host-peticas_session=/);
+ const pending=await request('register',{method:'POST',data:{name:'Voluntário Teste',email:'staff@example.test',password:'Senha-de-teste-123'}});assert.equal(pending.body.user.role,'pending');assert.equal((await request('inventory',{cookie:pending.cookie})).status,403);
+ assert.equal((await request('items',{method:'POST',cookie:admin.cookie,origin:'https://evil.test',data:{}})).status,403);
+ await request('users/'+pending.body.user.id,{method:'PATCH',cookie:admin.cookie,data:{role:'staff'}});
+ const staff=await request('login',{method:'POST',data:{email:'staff@example.test',password:'Senha-de-teste-123'}});assert.equal(staff.status,200);
+ assert.equal((await request('users',{cookie:staff.cookie})).status,403);
+ const created=await request('items',{method:'POST',cookie:staff.cookie,data:{name:'Ração teste',category:'Ração',unit:'kg',quantity:2,minimum:3,notes:''}});assert.equal(created.status,201);const iid=created.body.id;
+ let inv=(await request('inventory',{cookie:staff.cookie})).body;assert.equal(inv.items[0].quantity,2000);assert.equal(inv.notifications.filter(n=>!n.resolved).length,1);
+ await request('inventory',{cookie:staff.cookie});assert.equal((await request('inventory',{cookie:staff.cookie})).body.notifications.length,1);
+ const mid=crypto.randomUUID();assert.equal((await request('items/'+iid+'/movements',{method:'POST',cookie:staff.cookie,data:{id:mid,type:'out',quantity:3,reason:'Consumo',version:1}})).status,400);
+ assert.equal((await request('items/'+iid+'/movements',{method:'POST',cookie:staff.cookie,data:{id:mid,type:'in',quantity:5,reason:'Doação',version:1}})).status,200);
+ assert.equal((await request('items/'+iid+'/movements',{method:'POST',cookie:staff.cookie,data:{id:mid,type:'in',quantity:5,reason:'Doação',version:1}})).status,200);
+ inv=(await request('inventory',{cookie:staff.cookie})).body;assert.equal(inv.items[0].quantity,7000);assert.equal(inv.movements.length,2);assert.ok(inv.notifications[0].resolved);
+ assert.equal((await request('items/'+iid+'/movements',{method:'POST',cookie:staff.cookie,data:{id:crypto.randomUUID(),type:'out',quantity:1,reason:'Consumo',version:1}})).status,409);
+ const date=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});
+ assert.equal((await request('purchases',{method:'POST',cookie:staff.cookie,data:{itemId:iid,quantity:4,due:date,supplier:'Teste',notes:''}})).status,201);
+ inv=(await request('inventory',{cookie:staff.cookie})).body;const p=inv.purchases[0];assert.equal(inv.items[0].quantity,7000);assert.equal(inv.notifications.filter(n=>n.kind==='purchase'&&!n.resolved).length,1);
+ await request('purchases/'+p.id,{method:'PATCH',cookie:staff.cookie,data:{status:'received'}});await request('purchases/'+p.id,{method:'PATCH',cookie:staff.cookie,data:{status:'received'}});
+ inv=(await request('inventory',{cookie:staff.cookie})).body;assert.equal(inv.items[0].quantity,11000);assert.equal(inv.movements.length,3);
+ db.close();db=openDB(file);env.DB=db;assert.equal((await request('inventory',{cookie:staff.cookie})).body.items[0].quantity,11000);
+ const state=(await request('state',{cookie:admin.cookie})).body;assert.equal((await request('state',{method:'PUT',cookie:staff.cookie,data:state})).status,403);
+ const adoption=await request('adoptions',{method:'POST',data:{cat:1,answers:{name:'Candidato Teste',address:'Endereço fictício',security:'Telado'}}});assert.equal(adoption.status,201);const a=(await request('state',{cookie:admin.cookie})).body.applications[0];
+ assert.equal((await request('tracking',{method:'POST',data:{token:adoption.body.token}})).body.request.name,'Candidato Teste');assert.equal((await request('tracking',{method:'POST',data:{token:'invalid'}})).status,404);
+ for(const stage of [1,2,3]){const res=await request('adoptions/'+a.id,{method:'PATCH',cookie:admin.cookie,data:{cat:1,stage,guidance:'Orientação teste',version:stage}});assert.equal(res.status,200,JSON.stringify(res.body));}
+ assert.equal((await request('cats')).body.cats.some(c=>c.id===1),false);
+ await request('logout',{method:'POST',cookie:staff.cookie,data:{}});assert.equal((await request('inventory',{cookie:staff.cookie})).status,401);
+ db.close();
+});

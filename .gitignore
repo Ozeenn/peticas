@@ -1,2 +1,10 @@
 .sites-runtime/
 *.zip
+node_modules/
+.pnpm-store/
+data/
+.env
+.dev.vars
+dist/server/
+dist/client/
+dist/.openai/
