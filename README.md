@@ -8,7 +8,7 @@ Requer Node.js 24 e pnpm. Execute `pnpm install`, copie `.env.example` para `.en
 
 ## Primeiro acesso
 
-Área da equipe → Criar conta. A primeira responsável informa a chave privada de instalação e define seu próprio e-mail e senha. Demais cadastros ficam pendentes e são aprovados em Equipe. A chave não permite criar outra responsável. Troca de senha autenticada em Minha conta; recuperação por e-mail ainda não configurada.
+Área da equipe → Criar conta (somente durante a instalação). A primeira responsável informa a chave privada de instalação e define seu próprio e-mail e senha. Depois disso, o cadastro público fica bloqueado: somente a responsável cadastra voluntários em Equipe, com ficha e aceite do termo. Contas antigas pendentes podem ser liberadas pela responsável. Troca de senha autenticada em Minha conta; recuperação por e-mail ainda não configurada.
 
 ## Implementado
 
@@ -17,7 +17,10 @@ Requer Node.js 24 e pnpm. Execute `pnpm install`, copie `.env.example` para `.en
 - Compras agendadas, cancelamento e recebimento atômico, sem duplicar o saldo.
 - Alertas internos de falta, estoque baixo e compras previstas/vencidas. Consulta ao abrir a gestão e a cada minuto enquanto aberta. Leitura individual e resolução por reposição.
 - Login próprio, scrypt com sal aleatório, cookies HttpOnly/Secure/SameSite, sessão revogável, verificação de origem e limite de tentativas.
-- Responsável aprova acessos e edita gatos, cuidados e candidaturas. Equipe autorizada consulta e gerencia estoque/compras. APIs internas protegidas no servidor.
+- Responsável cadastra voluntários, gerencia acessos, gatos, itens, compras e candidaturas. Voluntários registram tratamentos/aplicações/evoluções, movimentam o saldo de itens existentes e consultam o status de entrevistas por CPF completo. Não acessam respostas, fichas pessoais, criação/edição de itens nem operações de compras. APIs internas protegidas no servidor.
+- Prontuário por gato com início e fim previsto do tratamento, medicamento, dose, frequência e referência da prescrição, aplicações datadas, responsável autenticado, evolução e encerramento. Histórico somente de acréscimo; correções são novas evoluções. Registros anteriores ficam disponíveis na seção de registros anteriores.
+- CPF validado na candidatura e busca exata limitada a 20 consultas por conta a cada 15 minutos. A busca retorna somente etapa e data. Índice usa hash com segredo aleatório persistido no banco. A responsável pode vincular CPF em candidaturas antigas; sem vínculo, elas não aparecem na busca. Respostas completas (inclusive CPF) ficam apenas na área da responsável.
+- Página pública com endereço, telefone comercial, mapa, adoção responsável, clínica parceira, voluntariado, bazar, show de prêmios e Cat Café. Visitas: quarta das 16h às 19h e sábado das 10h às 12h. Na ausência dos links específicos, as campanhas direcionam a uma consulta no WhatsApp comercial. Grupo e instruções de entrada são entregues somente pela API autenticada.
 - Persistência de gatos, vacinas, medicamentos e candidaturas. Os seis gatos iniciais ainda são exemplos fictícios do esboço.
 - Acompanhamento da candidatura por token aleatório, guardado como hash no banco.
 
@@ -28,6 +31,10 @@ Notificações aparecem dentro do sistema. Não há envio de WhatsApp/e-mail ou 
 ## Verificação e publicação
 
 `pnpm test`: testes integrados com SQLite real. `pnpm build`: gera Worker, assets e migrações. `public/` é a fonte da interface; `server/` contém a API; `drizzle/` contém migrações versionadas e imutáveis após publicação. A hospedagem aplica as migrações antes do Worker.
+
+As migrações 0001 e 0002 acrescentam prontuários e índice de CPF sem apagar registros existentes. A interface carrega app.js, management.js, community.js e interview-lookup.js nesta ordem; o último inicia a sessão após registrar todos os fluxos.
+
+Adotantes podem consultar o próprio CPF em Minha candidatura (`/#tracking`), sem login. A API pública `POST /api/tracking/cpf` aceita CPF completo válido e retorna somente data e etapa, sem nomes, respostas, orientações privadas ou tokens. Limite de 10 tentativas por IP a cada 15 minutos e validação de origem. A consulta por CPF não comprova identidade; o link individual continua disponível para orientações da equipe. Entrevistas antigas precisam ter o CPF vinculado pela responsável.
 
 Logo fornecida pelo usuário. Fotos ilustrativas: River Fx, Sergei Karakulov e Meaghan Cafferty / Unsplash.
 

@@ -1,4 +1,7 @@
 .sites-runtime/
+tmp/
+output/
+*.tar.gz
 *.zip
 node_modules/
 .pnpm-store/
