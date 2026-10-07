@@ -2,6 +2,24 @@
 const permissionLabels={'cats.submit':'Enviar novos gatos para aprovação','cats.photos':'Atualizar fotos','cats.status':'Alterar disponibilidade','medical.read':'Consultar prontuários','medical.write':'Registrar cuidados e medicações','adoptions.lookup':'Consultar situação de candidaturas'};
 const can=p=>account?.role==='admin'||account?.permissions?.includes(p);
 let catSubmissions=[],projectSettings={pix:'',campaigns:[]},doseSchedule=[],scheduleStart=localDate(),scheduleEnd=localDate(),unscheduledTreatments=0,messageState={configured:false,jobs:[]};
+let navigationRequest=0,pendingPage=null,pageLoadError='';
+const navigationLabels={overview:'Visão geral',cats:'Gatinhos',health:'Prontuário e medicações',applications:'Adoções',team:'Voluntários',settings:'Doações e avisos',lookup:'Consultar entrevista',account:'Minha conta',guide:'Orientações'};
+function pageLoading(label){return `<section class="panel page-loading" role="status" aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><div><strong>${esc(label)}</strong><p>Carregando informações…</p></div></section>`;}
+go=function(v){
+ const request=++navigationRequest;view=v;query='';filter='Todos';ageFilter='all';pageLoadError='';
+ pendingPage=activeAccount()&&['team','settings'].includes(v)?v:null;
+ location.hash=v;render();window.scrollTo(0,0);
+ return pendingPage?loadNavigationData(v,request):Promise.resolve();
+};
+async function loadNavigationData(page,request){
+ try{
+  const result=await api(page==='team'?'users':'messages');
+  if(request!==navigationRequest||view!==page)return;
+  if(page==='team')team=result.users;else messageState=result;
+ }catch(e){if(request!==navigationRequest||view!==page)return;pageLoadError=e.message;}
+ pendingPage=null;render();
+}
+loadTeam=function(){return go('team')};
 const inputField=(name,label,value='',type='text',required=false)=>`<label class="full">${label}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} maxlength="3000"></label>`;
 const permissionFields=selected=>Object.entries(permissionLabels).map(([p,label])=>`<label class="permission-choice"><input type="checkbox" name="permissions" value="${p}" ${selected.includes(p)?'checked':''}> ${label}</label>`).join('');
 const withError=async action=>{try{await action()}catch(e){toast(e.message)}};
@@ -20,9 +38,9 @@ loadData=async function(){
 async function refreshSchedule(draw=true){const r=await api(`medication-schedule?start=${scheduleStart}&end=${scheduleEnd}`);doseSchedule=r.schedule;unscheduledTreatments=r.unscheduled;if(draw)render()}
 function allowedViews(){return ['public','tracking','account','guide',...(account?.role==='admin'?['overview','cats','applications','team','settings']:[]),...(can('cats.submit')||can('cats.photos')||can('cats.status')?['cats']:[]),...(can('medical.read')||can('medical.write')?['health']:[]),...(can('adoptions.lookup')?['lookup']:[])]}
 adminShell=function(){
- const labels={overview:'Visão geral',cats:'Gatinhos',health:'Prontuário e medicações',applications:'Adoções',team:'Voluntários',settings:'Doações e avisos',lookup:'Consultar entrevista',account:'Minha conta',guide:'Orientações'};
+ const labels=navigationLabels;
  const navigation=Object.entries(labels).filter(([key])=>allowedViews().includes(key));
- return `<div class="shell"><aside class="sidebar">${brand()}<div class="nav-label">Organização do gatil</div><nav>${navigation.map(([key,label])=>`<button class="nav-btn ${view===key?'active':''}" onclick="${key==='team'?'loadTeam()':key==='settings'?'loadSettings()':`go('${key}')`}">${icon(key==='cats'?'cat':key==='health'?'health':'home')}${label}</button>`).join('')}</nav><div class="sidebar-bottom"><button class="nav-btn" onclick="go('public')">Ver site de adoção</button><div class="profile"><div><strong>${esc(account.name)}</strong><small>${account.role==='admin'?'Responsável':'Voluntário'}</small></div></div><button class="btn secondary small" onclick="logout()">Sair</button></div></aside><div><header class="topbar"><div class="breadcrumb">Área da equipe / ${labels[view]||'Orientações'}</div><button class="btn secondary small" onclick="go('public')">Ver site público</button></header><main class="content"></main></div></div>`;
+ return `<div class="shell" data-account="${esc(account.id)}"><aside class="sidebar">${brand()}<div class="nav-label">Organização do gatil</div><nav>${navigation.map(([key,label])=>`<button data-view="${key}" class="nav-btn ${view===key?'active':''}" onclick="${key==='team'?'loadTeam()':key==='settings'?'loadSettings()':`go('${key}')`}">${icon(key==='cats'?'cat':key==='health'?'health':'home')}${label}</button>`).join('')}</nav><div class="sidebar-bottom"><button class="nav-btn" onclick="go('public')">Ver site de adoção</button><div class="profile"><div><strong>${esc(account.name)}</strong><small>${account.role==='admin'?'Responsável':'Voluntário'}</small></div></div><button class="btn secondary small" onclick="logout()">Sair</button></div></aside><div><header class="topbar"><div class="breadcrumb">Área da equipe / ${labels[view]||'Orientações'}</div><button class="btn secondary small" onclick="go('public')">Ver site público</button></header><main class="content"></main></div></div>`;
 };
 const requirementsPriorRender=render;
 render=function(){
@@ -32,7 +50,16 @@ render=function(){
  if(!activeAccount()){$('#app').innerHTML=authPage();return;}
  if(!allowedViews().includes(view))view=['health','cats','guide'].find(v=>allowedViews().includes(v))||'guide';
  const pages={overview:requirementsOverview,cats:requirementsCats,health:requirementsHealth,applications:applicationsPage,team:requirementsTeam,account:accountPage,guide:volunteerGuide,lookup:requirementsLookup,settings:requirementsSettings};
- $('#app').innerHTML=adminShell();$('.content').innerHTML=(pages[view]||volunteerGuide)();bindFilters();
+ const shell=$('.shell');
+ if(!shell||shell.dataset?.account!==String(account.id))$('#app').innerHTML=adminShell();
+ for(const button of $('.sidebar nav').querySelectorAll('[data-view]')){
+  const selected=button.dataset.view===view;button.classList.toggle('active',selected);
+  if(selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+ }
+ $('.breadcrumb').textContent='Área da equipe / '+(navigationLabels[view]||'Orientações');
+ const main=$('.content');
+ main.innerHTML=pendingPage===view?pageLoading(navigationLabels[view]):pageLoadError?`<section class="panel form-panel" role="alert"><h2>Não foi possível carregar</h2><p>${esc(pageLoadError)}</p><button class="btn" onclick="go('${view}')">Tentar novamente</button></section>`:(pages[view]||volunteerGuide)();
+ main.setAttribute?.('aria-busy',pendingPage===view?'true':'false');bindFilters();
 };
 function requirementsOverview(){return `${heading('Organização do gatil','Gatos, cuidados e adoções em acompanhamento.')}<section class="stats">${[['Gatos cadastrados',cats.length],['Disponíveis',cats.filter(c=>c.status==='Disponível').length],['Novos gatos para revisar',catSubmissions.filter(s=>s.status==='pending').length],['Candidaturas em avaliação',applications.filter(a=>a.stage>=0&&a.stage<4).length]].map(([label,total])=>`<div class="stat"><span>${label}</span><strong>${total}</strong></div>`).join('')}</section><section class="panel community-section"><h2>Próximos cuidados</h2><p>${doseSchedule.filter(d=>!d.applied).length} aplicações previstas para hoje.</p><button class="btn" onclick="go('health')">Abrir prontuário e checklist</button></section><section class="panel community-section"><h2>Cadastros e candidaturas</h2><div class="form-actions"><button class="btn" onclick="go('cats')">Revisar gatos</button><button class="btn secondary" onclick="go('applications')">Analisar candidaturas</button></div></section>`}
 function requirementsCats(){return `${heading('Gatinhos','Histórico de entrada, resgate e disponibilidade.',account.role==='admin'||can('cats.submit')?'<button class="btn" onclick="editCat(null)">Cadastrar gato</button>':'')}${filters()}<div class="cats" id="cat-grid">${grid()}</div>${catSubmissions.length?`<section class="panel community-section"><h2>Cadastros enviados para revisão</h2>${catSubmissions.map(s=>`<div class="row"><div class="row-main"><strong>${esc(s.cat.name)}</strong><p>${esc(s.cat.rescueReport)}</p><small>${{pending:'Aguardando a Cris',approved:'Aprovado',rejected:'Reprovado'}[s.status]}${s.reason?' · '+esc(s.reason):''}</small></div>${account.role==='admin'&&s.status==='pending'?`<button class="btn small" onclick="reviewCat('${s.id}')">Revisar</button>`:''}</div>`).join('')}</section>`:''}`}
@@ -78,7 +105,7 @@ async function downloadCatRecords(adoptionId,token=''){await withError(async()=>
 const publicBeforeDonations=publicPage;
 publicPage=function(){return publicBeforeDonations()+`<section id="donations" class="panel community-section"><h2>Ajude o gatil</h2><p>Doações em dinheiro, medicamentos e areia ajudam a manter os cuidados. O gatil utiliza uma ração específica e não recebe doações de ração.</p>${projectSettings.pix?`<h3>Doação por Pix</h3><p>Chave: <strong>${esc(projectSettings.pix)}</strong></p><button class="btn" onclick="copyPix()">Copiar chave Pix</button>`:'<p>Entre em contato com o gatil para obter a chave Pix e combinar a entrega dos itens.</p>'}<div class="form-actions">${projectSettings.campaigns.map(c=>`<a class="btn secondary" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.label)}</a>`).join('')}<a class="btn" href="${contactLink('Olá! Quero fazer uma doação para o gatil.')}" target="_blank" rel="noopener">Combinar doação</a></div></section>`};
 async function copyPix(){await withError(async()=>{await navigator.clipboard.writeText(projectSettings.pix);toast('Chave Pix copiada.')})}
-async function loadSettings(){await withError(async()=>{messageState=await api('messages');go('settings')})}
+async function loadSettings(){await go('settings')}
 function requirementsSettings(){return `${heading('Doações e avisos','Configure as informações públicas e acompanhe os envios.')}<section class="panel community-section"><form onsubmit="saveProjectSettings(event)">${inputField('pix','Chave Pix',projectSettings.pix)}<label>Campanhas (uma por linha: nome | link HTTPS)<textarea name="campaigns" rows="6">${esc(projectSettings.campaigns.map(c=>c.label+' | '+c.url).join('\n'))}</textarea></label><button class="btn">Salvar informações públicas</button></form></section><section class="panel community-section"><h2>Avisos automáticos pelo WhatsApp</h2><p>${messageState.configured?'Serviço de envio configurado.':'Envio aguardando configuração do serviço de WhatsApp.'}</p><p>Novas candidaturas geram um aviso. O relatório de medicações é preparado às sextas-feiras pelo agendamento do servidor.</p>${messageState.jobs.map(j=>`<div class="row"><div class="row-main"><strong>${j.target==='owner'?'Aviso à responsável':'Relatório aos voluntários'}</strong><small>${new Date(j.created).toLocaleString('pt-BR')} · ${j.sent?'Enviado ao serviço':j.attempts>=10?'Falha — conferir configuração':'Aguardando envio'}${j.last_error?' · '+esc(j.last_error):''}</small></div></div>`).join('')||'<p>Nenhum aviso na fila.</p>'}</section>`}
 async function saveProjectSettings(e){await submit(e,async d=>{const campaigns=d.campaigns.split('\n').filter(l=>l.trim()).map(line=>{const separator=line.indexOf('|');if(separator<1)throw new Error('Use nome | link em cada linha.');return {label:line.slice(0,separator).trim(),url:line.slice(separator+1).trim()}});await api('project-settings','PUT',{pix:d.pix,campaigns});projectSettings=(await api('project-settings')).settings;render();toast('Informações salvas.')})}
 
