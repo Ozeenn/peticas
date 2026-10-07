@@ -2,3 +2,5 @@
 @media(max-width:720px){.sidebar nav{overflow-x:auto;justify-content:flex-start;max-height:none}.sidebar .nav-btn{min-width:65px;flex:1;white-space:nowrap;font-size:10px}.auth-card{padding:24px 19px}.stock-summary{align-items:flex-start;flex-direction:column}.purchase-row .row-main{flex-basis:55%}.stock-tabs .tab{padding:11px 13px}.public-header .brand{min-width:0}}
 
 .community-section{margin-top:32px;padding:28px}.community-section h2{margin-bottom:16px}.community-section p,.community-section li{line-height:1.75}.community-section p{margin-bottom:16px}.community-section ul{padding-left:22px}.community-section a:not(.btn){color:var(--blue,#092d80);text-decoration:underline}.community-section .notice{display:block}.community-section .btn{margin:4px}.row-main p{overflow-wrap:anywhere} @media(max-width:600px){.community-section{padding:20px}.community-section .form-actions{align-items:stretch;flex-direction:column}}
+
+.permission-choice{display:flex;gap:10px;align-items:center;margin:12px 0}.permission-choice input{width:auto;min-height:0}form>.btn{margin-top:16px}

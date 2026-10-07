@@ -11,3 +11,4 @@ data/
 dist/server/
 dist/client/
 dist/.openai/
+docs/referencias-fatec/*.docx

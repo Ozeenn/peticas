@@ -1,5 +1,7 @@
 # Peticas — gestão e adoção
 
+Para entender o código e dar manutenção, comece pela [documentação técnica e trilha de aprendizagem](docs/README.md). Ela descreve a interface, a API, o banco, as permissões, os testes, a publicação e as limitações da implementação atual.
+
 HTML/CSS/JavaScript e API Cloudflare Worker. SQLite local e Cloudflare D1 (SQLite gerenciado) no Sites.
 
 ## Uso local
@@ -12,21 +14,24 @@ Requer Node.js 24 e pnpm. Execute `pnpm install`, copie `.env.example` para `.en
 
 ## Implementado
 
-- Estoque por categoria/unidade, saldo em milésimos, quantidade mínima e observações.
-- Entradas, saídas e ajustes com motivo, usuário e data. Proteção contra concorrência e repetição de movimentação.
-- Compras agendadas, cancelamento e recebimento atômico, sem duplicar o saldo.
-- Alertas internos de falta, estoque baixo e compras previstas/vencidas. Consulta ao abrir a gestão e a cada minuto enquanto aberta. Leitura individual e resolução por reposição.
-- Login próprio, scrypt com sal aleatório, cookies HttpOnly/Secure/SameSite, sessão revogável, verificação de origem e limite de tentativas.
-- Responsável cadastra voluntários, gerencia acessos, gatos, itens, compras e candidaturas. Voluntários registram tratamentos/aplicações/evoluções, movimentam o saldo de itens existentes e consultam o status de entrevistas por CPF completo. Não acessam respostas, fichas pessoais, criação/edição de itens nem operações de compras. APIs internas protegidas no servidor.
-- Prontuário por gato com início e fim previsto do tratamento, medicamento, dose, frequência e referência da prescrição, aplicações datadas, responsável autenticado, evolução e encerramento. Histórico somente de acréscimo; correções são novas evoluções. Registros anteriores ficam disponíveis na seção de registros anteriores.
-- CPF validado na candidatura e busca exata limitada a 20 consultas por conta a cada 15 minutos. A busca retorna somente etapa e data. Índice usa hash com segredo aleatório persistido no banco. A responsável pode vincular CPF em candidaturas antigas; sem vínculo, elas não aparecem na busca. Respostas completas (inclusive CPF) ficam apenas na área da responsável.
-- Página pública com endereço, telefone comercial, mapa, adoção responsável, clínica parceira, voluntariado, bazar, show de prêmios e Cat Café. Visitas: quarta das 16h às 19h e sábado das 10h às 12h. Na ausência dos links específicos, as campanhas direcionam a uma consulta no WhatsApp comercial. Grupo e instruções de entrada são entregues somente pela API autenticada.
-- Persistência de gatos, vacinas, medicamentos e candidaturas. Os seis gatos iniciais ainda são exemplos fictícios do esboço.
-- Acompanhamento da candidatura por token aleatório, guardado como hash no banco.
+O escopo atualizado e as configurações estão em [Alterações após a reunião](docs/06-reuniao-e-implementacao.md).
+
+- Cadastro completo dos gatos, propostas de voluntários e revisão pela responsável.
+- Fotos reais; situações disponível, em tratamento, reservado e adotado.
+- Cadastro de voluntários exclusivo da responsável, com CPF e permissões individuais; ficha sem acesso ao sistema.
+- Formulário de adoção, análise, visita domiciliar, aprovação, reserva e conclusão; consulta por CPF e link individual.
+- Motivo de reprovação, termo em PDF, vídeo da residência, acompanhamento após adoção e devolução com histórico preservado.
+- Prontuário com prescrição, início/fim, intervalo em horas, aplicações e checklist de doses previstas.
+- Histórico do gato para o adotante em arquivo legível e imprimível.
+- Área pública de doações; Pix e links de campanhas configuráveis pela responsável.
+- Fila persistente para avisos de candidatura e relatório do fim de semana. O envio real precisa de gateway WhatsApp, credenciais, destinatários e agendamento na hospedagem.
+- Login, sessões revogáveis, restrições no servidor, proteção de origem e limites de tentativas.
+
+Estoque, compras e seus avisos saíram do escopo. Os registros antigos são preservados, e as rotas retiradas retornam 410.
 
 ## Limites desta entrega
 
-Notificações aparecem dentro do sistema. Não há envio de WhatsApp/e-mail ou compras/pagamentos automáticos. Fotos/vídeos de candidatos seguem pelo WhatsApp. Carteirinhas de vacinação guardam apenas o nome do arquivo, sem upload real. Não há verificação ou recuperação de e-mail.
+Não há gateway WhatsApp ou agendamento de produção configurados. Pix e links reais devem ser informados pela responsável. Uploads aceitam até 8 MB e usam R2 na hospedagem; comprovantes antigos de vacinação continuam com apenas o nome de arquivo. O termo pode ser anexado, sem assinatura digital. Os seis gatos iniciais continuam sendo exemplos fictícios. Não há envio de e-mail.
 
 ## Verificação e publicação
 

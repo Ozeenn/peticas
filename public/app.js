@@ -13,7 +13,7 @@ function ageInMonths(age){const text=String(age).toLowerCase().replace(',','.');
 function matchesAge(c){if(ageFilter==='all')return true;const months=ageInMonths(c.age);if(months===null)return false;return ageFilter==='kitten'?months<=6:ageFilter==='young'?months>6&&months<=12:ageFilter==='adult'?months>12&&months<=36:ageFilter==='mature'?months>36&&months<=84:months>84}
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const catBy=id=>cats.find(c=>c.id===Number(id))||{name:'Gatinho escolhido',photo:0};
-const img=c=>`<img src="${photos[c.photo]}" alt="Foto ilustrativa de ${esc(c.name)}" loading="lazy">`;
+const img=c=>`<img src="${c.photoId?'/api/attachments/'+encodeURIComponent(c.photoId):photos[c.photo||0]}" alt="${c.photoId?'Foto de':'Foto ilustrativa de'} ${esc(c.name)}" loading="lazy">`;
 const brand=()=>`<div class="brand"><img src="assets/peticas.jpg" alt="Logo Gatil Peticas"><div><strong>peticas<span style="color:var(--pink)">.</span></strong><small>PROJETO DE ADOÇÃO</small></div></div>`;
 function toast(s){$('#toast').textContent=s;$('#toast').classList.add('show');setTimeout(()=>$('#toast').classList.remove('show'),3500)}
 function go(v){view=v;query='';filter='Todos';ageFilter='all';location.hash=v;render();window.scrollTo(0,0)}
