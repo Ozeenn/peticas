@@ -24,6 +24,12 @@
 .details-grid,.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .details-grid>div{min-width:0;overflow-wrap:anywhere}
 form{display:grid;gap:16px;min-width:0}
+.form-panel{max-width:720px;padding:28px}
+.medical-history{margin-top:24px}
+.medical-history>.panel-head{padding:22px 24px;background:transparent}
+.medical-history>.panel-head h2{margin:0}
+.medical-history>.empty{margin:0;padding:24px;text-align:left;line-height:1.6}
+.community-section+.filters{margin-top:24px}
 form label{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:14px;line-height:1.5}
 form label:has(input[type=checkbox]),form label:has(input[type=radio]){flex-direction:row;align-items:flex-start}
 input,select,textarea{min-width:0;max-width:100%}
@@ -71,7 +77,12 @@ form+.details-grid,form+form,.details-grid+form{margin-top:24px}
  .public-actions{flex:1 1 200px;justify-content:flex-end}
  .modal-head{padding:18px}
  .modal-body{padding:20px}
+ .form-panel{padding:20px}
+ .medical-history>.panel-head,.medical-history>.empty{padding:20px}
  .community-section .btn{margin:0}
+}
+@media(max-width:600px){
+ .community-section .form-actions .btn{flex:0 1 auto;width:100%}
 }
 @media(max-width:420px){
  .cats{grid-template-columns:minmax(0,1fr)}
