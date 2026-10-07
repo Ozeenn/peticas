@@ -1,0 +1,85 @@
+/* Espaçamento compartilhado por páginas, formulários e diálogos. */
+.shell{grid-template-columns:238px minmax(0,1fr)}
+.shell>div,.content,.panel,.cat,.step,.stat,.application,.row-main{min-width:0}
+.sidebar nav{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.sidebar>.brand,.sidebar-bottom{flex-shrink:0}
+.sidebar-bottom{padding-top:16px}
+.nav-btn{position:relative;overflow-wrap:anywhere}
+.nav-btn.active:before{left:-18px}
+.topbar{height:auto;min-height:78px;padding-block:16px;flex-wrap:wrap}
+.breadcrumb{min-width:0;overflow-wrap:anywhere}
+.heading,.section-line,.panel-head,.cat-title,.cat-foot,.form-actions,.public-header,.public-actions,.footer{flex-wrap:wrap;gap:12px}
+.heading>div{flex:1 1 240px;min-width:0}
+.heading>.btn{white-space:normal}
+.cat-title h3{flex:1 1 110px;overflow-wrap:anywhere}
+.cat-title span{overflow-wrap:anywhere}
+.btn,.text-btn{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.btn{flex-shrink:0}
+.form-actions{justify-content:flex-start}
+.row{flex-wrap:wrap;align-items:flex-start}
+.row-main{flex:1 1 180px}
+.row>.avatar,.row>.pet-thumb{flex-shrink:0}
+.row .stock-actions{max-width:100%;flex-wrap:wrap}
+.badge,.tag{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.details-grid,.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.details-grid>div{min-width:0;overflow-wrap:anywhere}
+form{display:grid;gap:16px;min-width:0}
+form label{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:14px;line-height:1.5}
+form label:has(input[type=checkbox]),form label:has(input[type=radio]){flex-direction:row;align-items:flex-start}
+input,select,textarea{min-width:0;max-width:100%}
+form input:not([type=checkbox]):not([type=radio]),form select,form textarea{width:100%}
+input[type=file]{display:block;overflow:hidden;font-size:14px}
+input[type=checkbox],input[type=radio]{width:18px;min-width:18px;height:18px;min-height:18px;flex:0 0 18px;margin:2px 0 0;padding:0}
+textarea{resize:vertical;min-height:100px}
+form>.btn{justify-self:start;margin-top:0}
+form>.form-actions{margin-top:4px}
+form>p,form>.notice,form>.help-line{margin:0}
+form+.details-grid,form+form,.details-grid+form{margin-top:24px}
+.permission-choice{margin:0;gap:10px}
+.auth-links{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin-top:24px}
+.auth-links .text-btn{margin:0!important;padding:4px 0;text-align:left}
+.auth-card>.text-btn{display:block;margin-top:16px;text-align:left}
+.modal-head{gap:16px;align-items:flex-start}
+.modal-head h2{min-width:0;overflow-wrap:anywhere}
+.modal-head .close{flex:0 0 34px}
+.modal-body{overflow-wrap:anywhere}
+.modal-body>.form-grid,.modal-body>.details-grid{margin-block:20px}
+.modal-body>form{margin-top:20px}
+.modal-body .community-section{padding:20px 0}
+.filters{align-items:flex-end}
+.filters label{display:flex;flex-direction:column;gap:8px;flex:1 1 220px;min-width:0}
+.stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.steps{grid-template-columns:repeat(4,minmax(0,1fr))}
+.application-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.community-section p,.community-section a,.step p,.stat span{overflow-wrap:anywhere}
+@media(max-width:1100px){
+ .shell{grid-template-columns:200px minmax(0,1fr)}
+ .application-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+ .shell{display:block}
+ .sidebar nav{overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;justify-content:flex-start}
+ .sidebar .nav-btn{flex:0 0 auto;width:auto;min-width:80px;max-width:160px;white-space:normal}
+ .topbar{min-height:55px;padding:12px 16px}
+ .stats,.steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .heading>div{flex-basis:100%}
+ .form-grid,.details-grid,.application-grid{grid-template-columns:minmax(0,1fr)}
+ .form-actions{align-items:stretch}
+ .form-actions .btn{flex:1 1 180px}
+ .row-main{flex-basis:calc(100% - 60px)}
+ .row>.btn,.row>.stock-actions{margin-left:0}
+ .public-actions{flex:1 1 200px;justify-content:flex-end}
+ .modal-head{padding:18px}
+ .modal-body{padding:20px}
+ .community-section .btn{margin:0}
+}
+@media(max-width:420px){
+ .cats{grid-template-columns:minmax(0,1fr)}
+ .hero-copy{padding:24px}
+ .hero h1{font-size:30px}
+ .public-header .brand{flex-basis:100%}
+ .public-actions{justify-content:flex-start}
+ .form-actions .btn{flex-basis:100%}
+ .auth-card{margin:20px auto;padding:24px 18px}
+ .row>.btn{flex:1 1 150px}
+}
