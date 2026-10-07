@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { openDB } from '../server/local-db.mjs';
 import worker from '../server/worker.mjs';
 import { medicationSchedule, dispatchMessages, queueMessage, weeklyReport } from '../server/workflows.mjs';
@@ -97,4 +98,17 @@ test('Weekly reports are queued once and failed deliveries remain retryable',asy
   db.prepare('UPDATE message_jobs SET next_attempt=0').run();globalThis.fetch=async()=>new Response('{}',{status:200});
   await dispatchMessages(env);job=await db.prepare('SELECT * FROM message_jobs').first();assert.ok(job.sent);assert.equal(job.last_error,null);
  }finally{Date.now=originalNow;globalThis.fetch=originalFetch;db.close();fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('Deployment repair upgrades existing attachment tables without deleting records',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'peticas-upgrade-')),file=path.join(dir,'db.sqlite');let db=new DatabaseSync(file);
+ try{
+  db.exec('CREATE TABLE _local_migrations(name TEXT PRIMARY KEY)');
+  for(const name of ['0000_nervous_squirrel_girl.sql','0001_broken_tenebrous.sql','0002_loving_cyclops.sql']){db.exec(fs.readFileSync('drizzle/'+name,'utf8'));db.prepare('INSERT INTO _local_migrations VALUES(?)').run(name);}
+  db.exec(fs.readFileSync('docs/migrations-aplicadas/0003_meeting_workflows.sql','utf8'));
+  db.prepare('INSERT INTO attachments VALUES(?,?,?,?,?,?,?)').run('existing','video','existing-adoption','existing.mp4','video/mp4','existing-file',1);
+  db.prepare('INSERT INTO message_jobs(id,target,message,created) VALUES(?,?,?,?)').run('existing-message','owner','Existing queued message',1);
+  db.close();db=null;const upgraded=openDB(file);
+  try{assert.equal(upgraded.prepare('SELECT name FROM attachments WHERE id=?').bind('existing').first().name,'existing.mp4');assert.equal(upgraded.prepare('SELECT message FROM message_jobs WHERE id=?').bind('existing-message').first().message,'Existing queued message');assert.ok(upgraded.prepare('PRAGMA table_info(medical_records)').all().results.some(c=>c.name==='scheduled_at'));}finally{upgraded.close();}
+ }finally{if(db)db.close();fs.rmSync(dir,{recursive:true,force:true});}
 });
