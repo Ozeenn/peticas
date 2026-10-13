@@ -7,6 +7,23 @@
 
 @media (prefers-reduced-motion: no-preference) {
  html { scroll-behavior: smooth; }
+ html.motion-navigating { scroll-behavior: auto; }
+
+ .content, .public-main { view-transition-name: peticas-page; }
+ ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+ ::view-transition-group(peticas-page) {
+  animation-duration: var(--motion-page);
+  animation-timing-function: var(--motion-ease);
+ }
+ ::view-transition-old(peticas-page) {
+  animation: navigation-leave 180ms ease both;
+ }
+ ::view-transition-new(peticas-page) {
+  animation: navigation-arrive var(--motion-page) var(--motion-ease) both;
+ }
+ .motion-navigating .content > *,
+ .motion-navigating .public-main > *,
+ .motion-navigating .cats > .cat { animation: none; }
 
  .content > *,
  .public-main > :not(.demo):not(.footer),
@@ -17,6 +34,17 @@
  .modal-body > * {
   animation: page-arrive 180ms var(--motion-ease) backwards;
  }
+
+ .cats > .cat,
+ #personal-lookup-result > *,
+ #lookup-result > * {
+  animation: page-arrive 200ms var(--motion-ease) backwards;
+ }
+ .nav-btn.active::before {
+  transform-origin: center;
+  animation: navigation-marker 180ms var(--motion-ease) backwards;
+ }
+ .nav-btn .ico { transition: transform 180ms var(--motion-ease); }
 
  .btn, .text-btn, .nav-btn, .tab, .close {
   transition: background-color var(--motion-fast) ease,
@@ -69,6 +97,7 @@
    box-shadow: 0 10px 24px #092d8015;
   }
   .nav-btn:not(.active):hover { background-color: #ffffff75; }
+  .nav-btn:hover .ico { transform: translateX(3px); }
   .text-btn:hover { opacity: .8; }
  }
 
@@ -78,6 +107,19 @@
 @keyframes page-arrive {
  from { opacity: 0; transform: translateY(6px); }
  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes navigation-arrive {
+ from { opacity: 0; transform: translateX(12px); }
+ to { opacity: 1; transform: translateX(0); }
+}
+@keyframes navigation-leave {
+ from { opacity: 1; transform: translateX(0); }
+ to { opacity: 0; transform: translateX(-8px); }
+}
+@keyframes navigation-marker {
+ from { opacity: .3; transform: scaleY(.5); }
+ to { opacity: 1; transform: scaleY(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
