@@ -6,6 +6,7 @@
     "build": "docker compose build",
     "dev": "docker compose up --build",
     "test:python": "python -m pytest backend/tests",
-    "test": "node --test tests/interface.test.mjs"
+    "test": "node --test tests/interface.test.mjs",
+    "test:oci": "node --test tests/oci.test.mjs"
   }
 }

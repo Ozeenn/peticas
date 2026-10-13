@@ -1,0 +1,11 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$SITE_HOST} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	# No access log: private tracking tokens occur in URLs.
+	reverse_proxy api:4173
+}

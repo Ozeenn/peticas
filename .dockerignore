@@ -13,5 +13,7 @@ __pycache__
 .sites-runtime
 tmp
 dist
+backups
+*.dump
 *.tar.gz
 *.zip

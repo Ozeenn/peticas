@@ -57,6 +57,23 @@ def register(c):
     return r.json()['user']
 
 
+def test_https_reverse_proxy_preserves_origin_and_secure_session(client):
+    from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+    # TestClient uses "testclient" as its peer. Production trusts only Caddy's IP.
+    wrapped=ProxyHeadersMiddleware(client.app,trusted_hosts=['testclient'])
+    proxied=TestClient(wrapped,base_url='http://peticas.example.test')
+    response=proxied.post('/api/register',json={
+        'name':'Responsável','email':'proxy@example.test','password':PASSWORD,'setupKey':'private-test-setup'
+    },headers={'Origin':'https://peticas.example.test','X-Forwarded-Proto':'https','X-Forwarded-For':'192.0.2.10'})
+    assert response.status_code==200,response.text
+    cookie=response.headers['set-cookie']
+    assert cookie.startswith('__Host-peticas_session=')
+    assert 'Secure' in cookie and 'HttpOnly' in cookie
+    untrusted=TestClient(ProxyHeadersMiddleware(client.app,trusted_hosts=['192.0.2.123']),base_url='http://peticas.example.test')
+    rejected=untrusted.post('/api/login',json={},headers={'Origin':'https://peticas.example.test','X-Forwarded-Proto':'https'})
+    assert rejected.status_code==403
+
+
 def test_authentication_permissions_and_recovery(client):
     c=client
     assert call(c,'medical').status_code==401

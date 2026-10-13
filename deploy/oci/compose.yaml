@@ -1,0 +1,101 @@
+name: peticas-oci
+
+x-runtime: &runtime
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+x-application: &application
+  DATABASE_URL: postgresql://peticas:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}@db:5432/peticas
+  WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
+  WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}
+  WHATSAPP_OWNER_TARGET: owner
+  WHATSAPP_VOLUNTEERS_TARGET: volunteers
+
+services:
+  db:
+    <<: *runtime
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: peticas
+      POSTGRES_USER: peticas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U peticas -d peticas]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    <<: *runtime
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    # Only the private address of Caddy may supply HTTPS/client-IP headers.
+    command: [python, -m, uvicorn, backend.app:app, --host, 0.0.0.0, --port, '4173', --proxy-headers, --forwarded-allow-ips, '172.30.250.2', --no-access-log]
+    environment:
+      <<: *application
+      ADMIN_SETUP_KEY: ${ADMIN_SETUP_KEY:?Configure ADMIN_SETUP_KEY}
+      SEED_DEMO: 'false'
+    networks:
+      database:
+      proxy:
+        ipv4_address: 172.30.250.3
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4173/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  jobs:
+    <<: *runtime
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    command: [python, -m, backend.jobs]
+    environment: *application
+    networks: [database]
+    depends_on:
+      api:
+        condition: service_healthy
+
+  proxy:
+    <<: *runtime
+    image: caddy:2-alpine
+    environment:
+      SITE_HOST: ${SITE_HOST:?Configure um hostname com DNS apontado para a VM}
+      ACME_EMAIL: ${ACME_EMAIL:?Configure o e-mail de operação}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      proxy:
+        ipv4_address: 172.30.250.2
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  database:
+  proxy:
+    ipam:
+      config:
+        - subnet: 172.30.250.0/29
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

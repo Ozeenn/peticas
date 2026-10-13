@@ -4,6 +4,8 @@ Este manual descreve o código atual: backend Python/FastAPI, PostgreSQL e inter
 
 ## 1. Como o projeto funciona
 
+Para a instalação em servidor Oracle Cloud, consulte [IMPLANTACAO_OCI.md](IMPLANTACAO_OCI.md). Os arquivos em `deploy/oci/` configuram HTTPS, serviços de produção e backup. O `compose.yaml` da raiz continua sendo a configuração local.
+
 O navegador carrega `public/index.html`. Os arquivos JavaScript montam as telas e enviam pedidos para `/api/`. A API identifica a sessão, confere a permissão, valida os campos e lê ou grava no PostgreSQL. A rotina `jobs` processa a fila de avisos; o gateway WhatsApp é opcional. O Docker mantém esses processos separados.
 
 | Pasta / arquivo | O que contém | Quando mexer |

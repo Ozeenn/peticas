@@ -8,6 +8,8 @@ Para localizar onde alterar cada recurso, inserir arquivos, manter imagens e faz
 
 ## Executar localmente
 
+Para publicar na Oracle Cloud, use a [implantação OCI](docs/IMPLANTACAO_OCI.md) e a composição independente em `deploy/oci/compose.yaml`. Ela adiciona HTTPS e mantém API e PostgreSQL sem portas públicas, sem modificar a execução local.
+
 Requer Docker Desktop em execução com contêineres Linux.
 
 1. Copie `.env.example` para `.env` se esse arquivo ainda não existir.

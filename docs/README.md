@@ -2,6 +2,7 @@
 
 - [Manual de manutenção](MANUAL_MANUTENCAO.md): onde alterar cada recurso, imagens, banco, backups, documentos e publicação.
 - [Privacidade e LGPD](PRIVACIDADE_LGPD.md): modelos para revisão, escolhas e tratamento manual de pedidos.
+- [Implantação OCI](IMPLANTACAO_OCI.md): VM, HTTPS, configuração de produção e backups.
 
 - [Backend Python e PostgreSQL](08-backend-python-postgresql.md): execução, esquema, API, cuidados e testes.
 - [WhatsApp](WHATSAPP.md): configuração do gateway e confirmação dos envios.
