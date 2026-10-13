@@ -22,3 +22,7 @@ typing-inspection==0.4.4
 typing_extensions==4.16.0
 tzdata==2026.5
 uvicorn==0.34.2
+reportlab==4.4.9
+pillow==11.2.1
+charset-normalizer==3.4.2
+pypdf==5.4.0

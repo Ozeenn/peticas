@@ -20,6 +20,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .db import make_pool, initialize_database, seed_demo, ROOT
 from . import repository as repo
+from . import privacy, reports
 from .security import (PERMISSIONS, LOCAL_TZ, now, uid, fail, text, digest, password_hash, check_password,
                        validate_password, email, cpf, cpf_hash, limit, get_user, safe_user, staff, admin, permit, date)
 from .schedule import medication_schedule, unscheduled, iso
@@ -78,6 +79,50 @@ def dispatch(request,b,db,pool):
     user = get_user(db,request)
     ip = request.client.host if request.client else 'local'
     throttle = lambda key,maximum=10: limit(pool,key+':'+ip,maximum)
+    if path=='privacy' and method=='GET':
+        current=privacy.notice(db)
+        current['config']={k:v for k,v in current['config'].items() if k!='identifier'}
+        return reply({k:v for k,v in current.items() if k!='snapshot'})
+    if path=='privacy-settings':
+        admin(user)
+        if method=='GET': return reply({'settings':privacy.config(db)})
+        if method=='PUT': privacy.save_config(db,b); return reply({'ok':True})
+    if path=='maintenance-manual' and method=='GET':
+        admin(user)
+        return Response((ROOT/'docs/MANUAL_MANUTENCAO.md').read_text(encoding='utf-8'),media_type='text/markdown',
+                        headers={'Content-Disposition':'attachment; filename="manual-manutencao-peticas.md"'})
+    if path=='privacy-requests':
+        if method=='POST':
+            throttle('privacy-request',5)
+            return reply({'protocol':privacy.create_request(db,b),'message':'Pedido registrado. A responsável verificará sua identidade e dará andamento pelo contato informado.'},201)
+        if method=='GET': admin(user); return reply({'requests':privacy.requests(db)})
+    match=re.fullmatch(r'privacy-requests/([^/]+)',path)
+    if match and method=='PATCH':
+        admin(user)
+        if b.get('status') not in ('received','in_review','answered'): fail(400,'Situação inválida.')
+        notes=text(b.get('notes',''),3000,False)
+        if b['status']=='answered' and not notes: fail(400,'Registre a providência e a resposta antes de concluir o pedido.')
+        entry=f"{datetime.now(LOCAL_TZ):%d/%m/%Y %H:%M} | {user['name']} | {notes}" if notes else ''
+        result=db.execute("UPDATE solicitacoes_privacidade SET txt_situacao=%s,txt_anotacoes=concat_ws(E'\\n\\n',NULLIF(txt_anotacoes,''),NULLIF(%s,'')),dat_atualizacao=now() WHERE cod_identificador=%s",(b['status'],entry,match[1]))
+        if not result.rowcount: fail(404,'Pedido não encontrado.')
+        return reply({'ok':True})
+    match=re.fullmatch(r'cats/(\d+)/report.pdf',path)
+    if match and method=='GET':
+        admin(user)
+        return Response(reports.cat_report(db,int(match[1]),user),media_type='application/pdf',
+                        headers={'Content-Disposition':f'inline; filename="ficha-gato-{match[1]}.pdf"'})
+    match=re.fullmatch(r'adoptions/([^/]+)/term.pdf',path)
+    if match and method=='GET':
+        admin(user)
+        return Response(reports.adoption_term(db,match[1],user),media_type='application/pdf',
+                        headers={'Content-Disposition':'inline; filename="termo-adocao.pdf"'})
+    match=re.fullmatch(r'adoptions/([^/]+)/privacy',path)
+    if match and method=='POST':
+        throttle('privacy-consent',10)
+        authorize_adoption(db,None,match[1],b.get('token'))
+        # Choices must use the candidate's private link, even for an administrator.
+        privacy.record(db,match[1],b)
+        return reply({'ok':True})
     if path=='health' and method=='GET':
         db.execute('SELECT 1')
         return reply({'ok':True,'backend':'python','database':'postgresql'})
@@ -154,6 +199,7 @@ def dispatch(request,b,db,pool):
                     'cat_id':cat_id,'date':datetime.now(LOCAL_TZ).strftime('%d/%m/%Y'),'guidance':guidance,
                     'note':'Entrevista recebida pelo site.','created':now()})
         for k,v in answers.items(): repo.insert(db,'adoption_answers',{'adoption_id':rid,'question':k,'answer':v})
+        privacy.record(db,rid,b)
         repo.insert(db,'adoption_messages',{'id':uid(),'adoption_id':rid,'message':guidance,'created':now()})
         queue(db,'adoption:'+rid,'owner','Nova candidatura de adoção recebida. Acesse a área da responsável para analisar.')
         return reply({'token':token,'request':{'id':rid,'name':answers['name'],'cat':cat_id,'stage':0,'guidance':guidance}},201)
@@ -163,7 +209,7 @@ def dispatch(request,b,db,pool):
         if not r: fail(404,'Link de acompanhamento inválido.')
         a=repo.adoption(db,r)
         detail={k:a[k] for k in ('id','name','cat','stage','guidance','returned','rejectionReason')}
-        detail.update(stageHistory=repo.stage_history(db,r),messages=repo.adoption_messages(db,r['id']))
+        detail.update(stageHistory=repo.stage_history(db,r),messages=repo.adoption_messages(db,r['id']),privacy=privacy.latest(db,r['id']))
         return reply({'request':detail})
     if path in ('tracking/cpf','adoptions/lookup') and method=='POST':
         if path=='adoptions/lookup': permit(user,'adoptions.lookup'); limit(pool,'adoption-lookup:'+user['id'],20)
@@ -476,6 +522,8 @@ def attachment_route(request,b,db,user,path,method):
                 admin(user)
                 if mime!='application/pdf': fail(400,'Envie o termo em PDF.')
             elif not mime.startswith('video/'): fail(400,'Envie vídeo MP4 ou WebM.')
+            elif not (privacy.latest(db,rid) or {}).get('homeVideoConsent'):
+                fail(400,'O vídeo exige autorização específica da pessoa candidata. Ela pode confirmar pelo link privado ou combinar uma avaliação sem vídeo.')
             count=db.execute('SELECT count(*) AS num_contagem FROM anexos WHERE cod_candidatura=%s AND txt_tipo_vinculo=%s',(rid,owner_type)).fetchone()['count']
         if count>=10: fail(400,'Limite de 10 arquivos por registro.')
         fid=uid(); repo.insert(db,'attachments',{'id':fid,'owner_type':owner_type,'cat_id':cat_id,'adoption_id':rid,'name':name,'mime':mime,'content':raw,'created':now()})

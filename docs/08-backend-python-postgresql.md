@@ -115,4 +115,12 @@ Aplicações de medicamento exigem uma leitura recente de localização, solicit
 
 A localização depende da permissão explícita do dispositivo e de contexto seguro, conforme a [documentação da Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition). Em produção, use HTTPS; para desenvolvimento, use a origem local. As coordenadas são informadas pelo navegador e não são uma comprovação de presença no gatil nem uma restrição por distância. Não há rastreamento contínuo.
 
-O frontend carrega `care-tracking.js` por último, depois de `requirements.js`, e só então inicia a sessão.
+O frontend carrega os módulos na ordem de `public/index.html`. `documents-privacy.js` vem depois de `care-tracking.js` e inicia a sessão uma única vez, após registrar os fluxos.
+
+## Fichas PDF, termos e privacidade
+
+A responsável pode gerar a ficha completa do gato em PDF e o termo de adoção preenchido para impressão. As rotas exigem sessão de administrador; PDFs são produzidos em memória e não são arquivados automaticamente. O termo exige candidatura aprovada, gato vinculado e adoção sem devolução. Os modelos são destinados à revisão e assinatura manuscrita.
+
+`registros_privacidade` preserva o aviso apresentado, versão, ciência, escolha opcional sobre vídeo e data. `solicitacoes_privacidade` guarda protocolos e acompanhamento manual. Vídeos exigem autorização específica, que pode ser revista pelo link privado; a recusa não bloqueia a candidatura. Nenhum direito é atendido automaticamente por exclusão de dados ou envio de e-mail.
+
+As bases de tratamento, os prazos de guarda e a identificação do controlador devem ser revisados pela responsável. Consulte o [procedimento LGPD](PRIVACIDADE_LGPD.md) e o [manual de manutenção](MANUAL_MANUTENCAO.md). O código desses recursos está em `backend/reports.py`, `backend/privacy.py`, `backend/templates/termo_adocao.json` e `public/documents-privacy.js`.

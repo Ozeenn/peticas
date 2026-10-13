@@ -4,6 +4,8 @@ Backend Python com FastAPI e PostgreSQL 17 normalizado. O frontend permanece em 
 
 A configuração, o modelo relacional, o esquema SQL e os testes estão no [guia do backend Python e PostgreSQL](docs/08-backend-python-postgresql.md).
 
+Para localizar onde alterar cada recurso, inserir arquivos, manter imagens e fazer backup/restauração, consulte o [manual de manutenção](docs/MANUAL_MANUTENCAO.md). O [procedimento de privacidade e LGPD](docs/PRIVACIDADE_LGPD.md) orienta a revisão dos modelos e o atendimento manual de pedidos.
+
 ## Executar localmente
 
 Requer Docker Desktop em execução com contêineres Linux.
@@ -29,8 +31,10 @@ A primeira responsável cria a conta com a chave de instalação. Depois, soment
 - Pix e campanhas configuráveis.
 - Fila persistente de mensagens e relatório do fim de semana, processados por Python.
 - Transações, chaves estrangeiras e restrições para proteger reservas, doses e históricos.
+- Ficha completa do gato em PDF e termo de adoção preenchido para impressão e assinatura, acessíveis somente à responsável.
+- Aviso de privacidade, registro versionado da ciência, autorização opcional do vídeo e protocolos de pedidos sobre dados pessoais, com acompanhamento manual pela responsável.
 
-Estoque e compras permanecem fora do escopo. O envio WhatsApp depende das credenciais e destinatários da Meta; a configuração padrão simula os envios. Não há envio de e-mail ou assinatura digital. Os anexos aceitam até 8 MB e são armazenados no PostgreSQL. Comprovantes de vacinas na interface anterior ainda guardam somente o nome do arquivo.
+Estoque e compras permanecem fora do escopo. O envio WhatsApp depende das credenciais e destinatários da Meta; a configuração padrão simula os envios. Não há envio de e-mail ou assinatura digital. Os anexos aceitam até 8 MB e são armazenados no PostgreSQL. Comprovantes de vacinas na interface anterior ainda guardam somente o nome do arquivo. Os modelos de termo e de privacidade precisam de revisão da responsável, identificação e política de guarda adequadas ao funcionamento real do gatil.
 
 ## Comandos
 

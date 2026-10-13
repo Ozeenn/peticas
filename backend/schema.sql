@@ -123,3 +123,17 @@ CREATE TABLE mensagens_candidaturas (
  dat_cadastro timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_mensagens_candidatura_cadastro ON mensagens_candidaturas(cod_candidatura,dat_cadastro);
+
+CREATE TABLE registros_privacidade (
+ cod_identificador text PRIMARY KEY, cod_candidatura text NOT NULL REFERENCES candidaturas_adocao(cod_identificador),
+ txt_versao_aviso text NOT NULL, txt_aviso text NOT NULL, flg_ciencia boolean NOT NULL CHECK(flg_ciencia),
+ flg_consentimento_video boolean NOT NULL, dat_cadastro timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_privacidade_candidatura ON registros_privacidade(cod_candidatura,dat_cadastro);
+CREATE TABLE solicitacoes_privacidade (
+ cod_identificador text PRIMARY KEY, txt_nome text NOT NULL, txt_email text NOT NULL,
+ txt_tipo text NOT NULL CHECK(txt_tipo IN ('access','correction','deletion','revocation','other')),
+ txt_descricao text NOT NULL, txt_situacao text NOT NULL DEFAULT 'received' CHECK(txt_situacao IN ('received','in_review','answered')),
+ txt_anotacoes text NOT NULL DEFAULT '', dat_cadastro timestamptz NOT NULL DEFAULT now(),
+ dat_atualizacao timestamptz NOT NULL DEFAULT now()
+);

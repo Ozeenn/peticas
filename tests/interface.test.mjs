@@ -7,7 +7,7 @@ test('Final interface loads in script order and respects navigation permissions'
  const elements=new Map();
  const element=selector=>{if(!elements.has(selector))elements.set(selector,{innerHTML:'',textContent:'',open:false,scrollTop:0,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},insertAdjacentHTML(position,html){this.innerHTML+=html},showModal(){this.open=true},close(){this.open=false}});return elements.get(selector)};
  const context=vm.createContext({console,Date,URL,crypto:globalThis.crypto,structuredClone,encodeURIComponent,setTimeout:()=>0,setInterval:()=>0,clearTimeout(){},location:{hash:'',origin:'https://test.peticas'},history:{replaceState(){}},window:{addEventListener(){},scrollTo(){}},document:{querySelector:element,hidden:false},navigator:{},fetch(){throw new Error('Unexpected network call')}});
- for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
+ for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js','documents-privacy.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
  const evaluate=source=>vm.runInContext(source,context);
  evaluate("ready=true;account={role:'admin',name:'Cris',permissions:[]};view='overview';render()");assert.doesNotMatch(elements.get('#app').innerHTML,/Abrir estoque|go\('stock'\)/);assert.match(elements.get('.content').innerHTML,/Novos gatos para revisar/);
  evaluate("view='cats';render();editCat(null)");assert.match(elements.get('#modal').innerHTML,/name="rescueLocation"/);assert.match(elements.get('#modal').innerHTML,/name="rescueReport"/);
@@ -23,7 +23,7 @@ test('Navigation shows loading immediately, ignores late responses and renders o
  const listeners={},requests=[],draws=[];
  const element={innerHTML:'',textContent:'',querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){}};
  const context=vm.createContext({console,Date,URL,crypto:globalThis.crypto,structuredClone,encodeURIComponent,setTimeout:()=>0,setInterval:()=>0,clearTimeout(){},location:{hash:'',origin:'https://test.peticas'},history:{replaceState(){}},window:{addEventListener(name,handler){listeners[name]=handler},scrollTo(){}},document:{querySelector:()=>element,hidden:false},navigator:{},fetch(){throw new Error('Unexpected network call')},requests,draws});
- for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
+ for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js','documents-privacy.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
  const evaluate=source=>vm.runInContext(source,context);
  evaluate("ready=true;account={id:1,role:'admin',name:'Teste',permissions:[]};render=()=>draws.push({view,pendingPage,pageLoadError});api=path=>new Promise((resolve,reject)=>requests.push({path,resolve,reject}))");
  const pendingTeam=evaluate("go('team')");
@@ -42,7 +42,7 @@ test('Complete CPF histories, volunteer summary and mandatory location protect t
  const requests=[];
  const element={innerHTML:'',textContent:'',isConnected:true,querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},insertAdjacentHTML(){}};
  const context=vm.createContext({console,Date,URL,crypto:globalThis.crypto,structuredClone,encodeURIComponent,setTimeout:()=>0,setInterval:()=>0,clearTimeout(){},location:{hash:'#tracking',origin:'https://test.peticas'},history:{replaceState(){}},window:{addEventListener(){},scrollTo(){}},document:{querySelector:()=>element,hidden:false},navigator:{},requests,fetch(){throw new Error('Unexpected network call')}});
- for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
+ for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js','documents-privacy.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
  const evaluate=source=>vm.runInContext(source,context);
  const html=evaluate("candidatureResults([{date:'2026-10-13',stage:2,stageHistory:[{stage:0,date:'2026-10-13T10:00:00Z'},{stage:1,date:'2026-10-13T11:00:00Z'}]},{date:'2026-10-14',stage:0,stageHistory:[]}])");
  assert.match(html,/Candidatura 1/);assert.match(html,/Candidatura 2/);
@@ -80,4 +80,24 @@ test('Animated navigation keeps the latest destination and respects reduced moti
  reduced=true;assert.equal(await vm.runInContext("go('guide')",context),'loaded:guide');assert.equal(queued.length,2);
  document.startViewTransition=undefined;assert.equal(await vm.runInContext("go('account')",context),'loaded:account');
  assert.deepEqual(calls,['health','guide','account']);
+});
+
+test('Privacy choices remain separate from interview answers and unchecked video is not authorized',async()=>{
+ const elements=new Map(),requests=[];
+ const element=selector=>{if(!elements.has(selector))elements.set(selector,{innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},showModal(){},insertAdjacentHTML(position,html){this.innerHTML+=html}});return elements.get(selector)};
+ class SubmittedFormData extends Map{constructor(){super([['name','Candidata'],['privacyAcknowledged','on']])}}
+ const context=vm.createContext({console,Date,URL,crypto:globalThis.crypto,structuredClone,encodeURIComponent,FormData:SubmittedFormData,setTimeout:()=>0,setInterval:()=>0,clearTimeout(){},location:{hash:'',origin:'https://test.peticas'},history:{replaceState(){}},window:{addEventListener(){},scrollTo(){}},document:{querySelector:element,hidden:false},navigator:{},requests});
+ for(const file of ['app.js','management.js','community.js','interview-lookup.js','requirements.js','navigation-motion.js','care-tracking.js','documents-privacy.js'])vm.runInContext(fs.readFileSync('public/'+file,'utf8').replace(/\nboot\(\);\s*$/,''),context,{filename:file});
+ const evaluate=source=>vm.runInContext(source,context);
+ evaluate("formStep=questions.length-1;drawForm()");
+ assert.match(elements.get('#adoption-form').innerHTML,/name="privacyAcknowledged" required/);
+ assert.doesNotMatch(elements.get('#adoption-form').innerHTML,/name="homeVideoConsent" checked/);
+ evaluate("privacyNotice.version='aviso-teste';formData={cpf:'52998224725',homeVideoConsent:true};submit=async(e,fn)=>fn();showModal=()=>{};api=async(path,method,data)=>{requests.push({path,method,data});return {request:{id:'candidatura'},token:'token'}}");
+ await evaluate("nextForm({preventDefault(){},target:{}})");
+ assert.equal(requests[0].data.privacyAcknowledged,true);
+ assert.equal(requests[0].data.homeVideoConsent,false);
+ assert.equal(requests[0].data.privacyVersion,'aviso-teste');
+ assert.equal(requests[0].data.answers.cpf,'52998224725');
+ assert.equal('privacyAcknowledged' in requests[0].data.answers,false);
+ assert.equal('homeVideoConsent' in requests[0].data.answers,false);
 });

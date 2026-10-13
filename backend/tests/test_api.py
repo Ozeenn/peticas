@@ -46,6 +46,8 @@ def client(monkeypatch):
 
 
 def call(c,path,method='GET',data=None):
+    if path=='adoptions' and method=='POST' and isinstance(data,dict):
+        data={**data,'privacyAcknowledged':True,'privacyVersion':c.get('/api/privacy').json()['version'],'homeVideoConsent':data.get('homeVideoConsent',True)}
     return c.request(method,'/api/'+path,json=data,headers={'Origin':'https://test.peticas'})
 
 
