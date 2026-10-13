@@ -8,7 +8,7 @@ TABLES = {
  'adoption_stage_history':'historico_etapas_adocao','adoption_events':'eventos_adocao',
  'medical_records':'registros_clinicos','attachments':'anexos','cat_photos':'fotos_gatos',
  'campaigns':'campanhas','message_jobs':'fila_mensagens','gateway_jobs':'envios_whatsapp',
- 'gateway_deliveries':'entregas_whatsapp','schema_migrations':'migracoes_esquema',
+ 'gateway_deliveries':'entregas_whatsapp',
  'application_locations':'localizacoes_aplicacoes','adoption_messages':'mensagens_candidaturas'
 }
 COLUMNS = {
@@ -36,7 +36,7 @@ COLUMNS = {
  'message':'txt_mensagem','sent':'dat_envio','attempts':'num_tentativas','next_attempt':'dat_proxima_tentativa',
  'last_error':'txt_ultimo_erro','fingerprint':'txt_impressao_hash','job_id':'cod_envio',
  'recipient_hash':'txt_destinatario_hash','state':'txt_estado','meta_id':'txt_identificador_meta',
- 'updated':'dat_atualizacao','checksum':'txt_verificacao_hash','responsible':'txt_responsavel_registro',
+ 'updated':'dat_atualizacao','responsible':'txt_responsavel_registro',
  'record_id':'cod_registro','latitude':'num_latitude','longitude':'num_longitude',
  'accuracy':'num_precisao_metros','captured_at':'dat_coleta','applied_by':'cod_usuario_aplicacao',
  'applied_created':'dat_registro_aplicacao'

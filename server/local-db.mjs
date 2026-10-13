@@ -1,6 +1,0 @@
-import { DatabaseSync } from 'node:sqlite';
-import fs from 'node:fs';
-export function openDB(file){const db=new DatabaseSync(file);db.exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;');db.exec('CREATE TABLE IF NOT EXISTS _local_migrations (name TEXT PRIMARY KEY)');for(const name of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort()){if(!db.prepare('SELECT name FROM _local_migrations WHERE name=?').get(name)){db.exec('BEGIN');try{db.exec(fs.readFileSync('drizzle/'+name,'utf8'));db.prepare('INSERT INTO _local_migrations VALUES (?)').run(name);db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}}}
- const result=(sql,args,mode)=>{const stmt=db.prepare(sql);if(mode==='first')return stmt.get(...args)||null;if(mode==='all')return {results:stmt.all(...args)};const r=stmt.run(...args);return {meta:{changes:Number(r.changes),last_row_id:Number(r.lastInsertRowid)}}};
- const binding={prepare(sql){return {sql,args:[],bind(...args){return {...this,args}},first(){return result(this.sql,this.args,'first')},all(){return result(this.sql,this.args,'all')},run(){return result(this.sql,this.args,'run')}}},async batch(statements){db.exec('BEGIN IMMEDIATE');try{const res=statements.map(s=>result(s.sql,s.args,'run'));db.exec('COMMIT');return res}catch(e){db.exec('ROLLBACK');throw e}},close(){db.close()}};return binding;
-}

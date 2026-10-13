@@ -1,10 +1,10 @@
-"""PostgreSQL connections and immutable, checksummed SQL migrations."""
-import hashlib
+"""PostgreSQL connections and initial creation from the current schema."""
 import json
 import os
+import re
 from pathlib import Path
 
-import psycopg
+from psycopg import sql
 from psycopg_pool import ConnectionPool
 from .naming import REVERSE_COLUMNS, decode_value
 
@@ -21,20 +21,22 @@ def make_pool(url=None):
                           kwargs={'row_factory': portuguese_row}, open=False)
 
 
-def migrate(pool):
+def initialize_database(pool):
     with pool.connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(742091)')
-        db.execute('CREATE TABLE IF NOT EXISTS migracoes_esquema(txt_nome text PRIMARY KEY, txt_verificacao_hash text NOT NULL)')
-        for path in sorted((ROOT / 'backend/migrations').glob('*.sql')):
-            content = path.read_text(encoding='utf-8')
-            checksum = hashlib.sha256(content.encode()).hexdigest()
-            row = db.execute('SELECT txt_verificacao_hash FROM migracoes_esquema WHERE txt_nome=%s', (path.name,)).fetchone()
-            if row:
-                if row['checksum'] != checksum:
-                    raise RuntimeError('Migração aplicada foi alterada: ' + path.name)
-                continue
+        content=(ROOT/'backend/schema.sql').read_text(encoding='utf-8')
+        tables=re.findall(r'CREATE TABLE ([a-z_]+)\s*\((.*?)\);',content,re.S)
+        existing={r['table_name'] for r in db.execute('SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema()')}
+        expected={name for name,_ in tables}
+        if not existing.intersection(expected):
             db.execute(content)
-            db.execute('INSERT INTO migracoes_esquema VALUES(%s,%s)', (path.name, checksum))
+        else:
+            if not expected.issubset(existing):
+                raise RuntimeError('Banco incompleto. Confira backend/schema.sql antes de iniciar a aplicação.')
+            # Check required columns without altering populated tables.
+            for name,definition in tables:
+                columns=re.findall(r'\b((?:cod|txt|num|dat|hor|flg|bin)_[a-z_]+)\s+(?:text|integer|bigint|double precision|timestamptz|date|time|boolean|bytea)\b',definition)
+                db.execute(sql.SQL('SELECT {} FROM {} LIMIT 0').format(sql.SQL(',').join(map(sql.Identifier,columns)),sql.Identifier(name)))
         db.execute("INSERT INTO configuracoes VALUES('segredo_cpf',%s) ON CONFLICT DO NOTHING", (os.urandom(32).hex(),))
 
 
@@ -43,8 +45,6 @@ def seed_demo(pool):
     from datetime import datetime
     from .security import LOCAL_TZ
     path = ROOT / 'backend/seed.json'
-    if not path.exists():
-        path = ROOT / 'server/seed.json'
     with pool.connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(742091)')
         if db.execute("SELECT 1 FROM configuracoes WHERE txt_chave='demo-seeded'").fetchone():
@@ -63,4 +63,4 @@ def seed_demo(pool):
 
 if __name__ == '__main__':
     with make_pool() as pool:
-        migrate(pool)
+        initialize_database(pool)

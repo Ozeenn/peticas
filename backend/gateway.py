@@ -1,15 +1,15 @@
-"""The existing Python WhatsApp gateway backed by the same PostgreSQL database."""
+"""WhatsApp gateway with PostgreSQL persistence."""
 from contextlib import contextmanager
 import os
 import time
 import psycopg
 from fastapi import HTTPException
 from .db import portuguese_row
-from services.whatsapp.app import create_app as create_legacy_app
+from .whatsapp import create_app as create_whatsapp_app
 
 
 class PostgresStore:
-    def __init__(self, unused):
+    def __init__(self):
         self.url=os.environ['DATABASE_URL']
 
     @contextmanager
@@ -36,7 +36,7 @@ class PostgresStore:
 
 
 def create_app():
-    return create_legacy_app(store_factory=PostgresStore)
+    return create_whatsapp_app(store_factory=PostgresStore)
 
 
 app=create_app()

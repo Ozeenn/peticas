@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
-from .db import make_pool, migrate, seed_demo, ROOT
+from .db import make_pool, initialize_database, seed_demo, ROOT
 from . import repository as repo
 from .security import (PERMISSIONS, LOCAL_TZ, now, uid, fail, text, digest, password_hash, check_password,
                        validate_password, email, cpf, cpf_hash, limit, get_user, safe_user, staff, admin, permit, date)
@@ -502,7 +502,7 @@ def create_app(database_url=None, seed=None):
     async def lifespan(app):
         pool=make_pool(database_url); pool.open(); pool.wait()
         try:
-            await run_in_threadpool(migrate,pool)
+            await run_in_threadpool(initialize_database,pool)
             should_seed = seed if seed is not None else os.getenv('SEED_DEMO','false').lower()=='true'
             if should_seed:
                 await run_in_threadpool(seed_demo,pool)

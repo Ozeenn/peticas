@@ -2,7 +2,7 @@
 
 Backend Python com FastAPI e PostgreSQL 17 normalizado. O frontend permanece em HTML, CSS e JavaScript. O banco usa tabelas e colunas em português, com prefixos de três letras por tipo ou finalidade: `cod_`, `txt_`, `num_`, `dat_`, `hor_`, `flg_` e `bin_`.
 
-A configuração, o modelo relacional, as migrações e os testes estão no [guia do backend Python e PostgreSQL](docs/08-backend-python-postgresql.md).
+A configuração, o modelo relacional, o esquema SQL e os testes estão no [guia do backend Python e PostgreSQL](docs/08-backend-python-postgresql.md).
 
 ## Executar localmente
 
@@ -41,14 +41,12 @@ Estoque e compras permanecem fora do escopo. O envio WhatsApp depende das creden
 | `pnpm build` | Construir imagens Docker |
 | `docker compose --profile whatsapp up --build -d` | Ativar também o gateway WhatsApp |
 | `python -m pytest backend/tests -q` | Testar a API com `PETICAS_TEST_DATABASE_URL` configurada |
-| `python -m unittest services.whatsapp.test_gateway -q` | Testar os contratos do gateway existente |
-| `pnpm test` | Testes JavaScript da interface e da implementação legada |
-| `pnpm dev:legacy` / `pnpm build:legacy` | Executar/construir explicitamente o Worker/SQLite anterior |
+| `pnpm test` | Testes JavaScript da interface |
 
 ## Estrutura
 
-`backend/` contém a API Python, a rotina de mensagens, o acesso PostgreSQL, as migrações e os testes. `public/` contém a interface. `compose.yaml` configura a execução local. `services/whatsapp/` contém a integração Python com a Meta, reutilizada com armazenamento PostgreSQL no novo Compose.
+`backend/` contém a API Python, a rotina de mensagens, o acesso PostgreSQL, o esquema SQL e os testes. `public/` contém a interface. `compose.yaml` configura a execução local. A integração Python com a Meta também está em `backend/`.
 
-A implementação anterior em `server/`, `db/` e `drizzle/` foi preservada para referência e continua com banco independente. Os guias técnicos 01–07 descrevem principalmente essa versão. A [documentação técnica](docs/README.md) indica o novo guia. O Docker local não publica o site em produção; a hospedagem Python/PostgreSQL ainda será escolhida.
+O esquema completo está em `backend/schema.sql`. A API cria as tabelas quando o banco está vazio e valida um banco existente sem recriá-lo. Não há arquivos nem tabela de histórico de migrações. Mudanças futuras da estrutura de um banco preenchido devem ser aplicadas explicitamente por SQL, depois de backup. A [documentação técnica](docs/README.md) reúne os guias atuais.
 
 Logo fornecida pelo usuário. Fotos ilustrativas: River Fx, Sergei Karakulov e Meaghan Cafferty / Unsplash.

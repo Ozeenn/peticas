@@ -9,3 +9,9 @@ output
 __pycache__
 .pytest_cache
 .openai
+.pnpm-store
+.sites-runtime
+tmp
+dist
+*.tar.gz
+*.zip

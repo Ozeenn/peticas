@@ -47,7 +47,9 @@ CREATE TABLE propostas_gatos (
 CREATE TABLE vacinas (
  cod_identificador bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, cod_gato integer NOT NULL REFERENCES gatos(cod_identificador), num_posicao integer NOT NULL,
  txt_descricao text NOT NULL, dat_data date NOT NULL, txt_situacao text NOT NULL, flg_realizado boolean NOT NULL DEFAULT false,
- dat_aplicacao date, txt_responsavel text NOT NULL DEFAULT '', dat_proxima_dose date, txt_comprovante text NOT NULL DEFAULT ''
+ dat_aplicacao date, txt_responsavel text NOT NULL DEFAULT '', dat_proxima_dose date, txt_comprovante text NOT NULL DEFAULT '',
+ num_versao integer NOT NULL DEFAULT 1, cod_usuario_aplicacao text REFERENCES usuarios(cod_identificador),
+ dat_registro_aplicacao timestamptz
 );
 CREATE TABLE tarefas_cuidados (
  cod_identificador bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, cod_gato integer NOT NULL REFERENCES gatos(cod_identificador), num_posicao integer NOT NULL,
@@ -107,3 +109,17 @@ CREATE TABLE entregas_whatsapp (
  txt_estado text NOT NULL CHECK(txt_estado IN ('sending','uncertain','accepted','rejected')),
  txt_identificador_meta text, dat_atualizacao timestamptz NOT NULL, PRIMARY KEY(cod_envio,txt_destinatario_hash)
 );
+
+CREATE TABLE localizacoes_aplicacoes (
+ cod_registro text PRIMARY KEY REFERENCES registros_clinicos(cod_identificador),
+ num_latitude double precision NOT NULL CHECK(num_latitude BETWEEN -90 AND 90),
+ num_longitude double precision NOT NULL CHECK(num_longitude BETWEEN -180 AND 180),
+ num_precisao_metros double precision NOT NULL CHECK(num_precisao_metros BETWEEN 0 AND 100000),
+ dat_coleta timestamptz NOT NULL, dat_cadastro timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE mensagens_candidaturas (
+ cod_identificador text PRIMARY KEY, cod_candidatura text NOT NULL REFERENCES candidaturas_adocao(cod_identificador),
+ cod_usuario text REFERENCES usuarios(cod_identificador), txt_mensagem text NOT NULL,
+ dat_cadastro timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_mensagens_candidatura_cadastro ON mensagens_candidaturas(cod_candidatura,dat_cadastro);

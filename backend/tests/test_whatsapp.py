@@ -1,23 +1,25 @@
 from dataclasses import replace
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import closing
-import sqlite3
-import tempfile
+import pytest
 import threading
 import unittest
-from pathlib import Path
 
 import httpx
 from fastapi.testclient import TestClient
-from services.whatsapp.app import Settings, create_app
+from backend.whatsapp import Settings, create_app
+from backend.gateway import PostgresStore
+from backend.tests.test_api import client, URL
+
+pytestmark=pytest.mark.skipif(not URL,reason='Configure PETICAS_TEST_DATABASE_URL')
 
 
 class GatewayTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
+    @pytest.fixture(autouse=True)
+    def setup_database(self, client, monkeypatch):
+        self.pool=client.app.state.pool
+        monkeypatch.setenv('DATABASE_URL',self.pool.conninfo)
         self.settings = Settings(
-            token="a" * 40, db_path=str(Path(self.temp.name) / "gateway.sqlite"),
+            token="a" * 40,
             recipients={"owner": ("5511999999999",), "volunteers": ()},
             dry_run=False, access_token="fake-meta-token", phone_number_id="12345",
             graph_version="v99.0", mode="text",
@@ -35,7 +37,7 @@ class GatewayTests(unittest.TestCase):
                            headers={"Authorization": "Bearer " + self.settings.token, "Idempotency-Key": id}, **kwargs)
 
     def client(self, settings=None):
-        return TestClient(create_app(settings or self.settings, self.meta))
+        return TestClient(create_app(settings or self.settings, self.meta, store_factory=PostgresStore))
 
     def test_auth_validation_and_body_limit(self):
         with self.client() as client:
@@ -63,9 +65,9 @@ class GatewayTests(unittest.TestCase):
         self.assertEqual(str(request.url), "https://graph.facebook.com/v99.0/12345/messages")
         self.assertEqual(request.headers["authorization"], "Bearer fake-meta-token")
         self.assertIn(b'Nova candidatura', request.content)
-        with closing(sqlite3.connect(self.settings.db_path)) as db:
-            self.assertEqual(db.execute("SELECT state FROM deliveries").fetchone()[0], "accepted")
-            self.assertNotIn("Nova candidatura", " ".join(db.iterdump()))
+        with self.pool.connection() as db:
+            self.assertEqual(db.execute('SELECT txt_estado FROM entregas_whatsapp').fetchone()['state'], 'accepted')
+            self.assertEqual(db.execute('SELECT count(*) FROM envios_whatsapp').fetchone()['count'], 1)
 
     def test_concurrent_requests_cannot_send_twice(self):
         entered, release = threading.Event(), threading.Event()
@@ -142,7 +144,3 @@ class GatewayTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 with self.client(settings):
                     pass
-
-
-if __name__ == "__main__":
-    unittest.main()

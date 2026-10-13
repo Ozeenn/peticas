@@ -13,7 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from backend.db import migrate
+from backend.db import initialize_database
 from backend.jobs import weekly_report, dispatch_messages
 from backend.security import LOCAL_TZ
 
@@ -179,10 +179,11 @@ def test_medical_schedule_idempotency_completion_and_outbox(client,monkeypatch):
     assert call(c,'messages').json()['jobs'][0]['sent'] is not None
 
 
-def test_sql_naming_constraints_and_migrations(client):
+def test_sql_naming_constraints_and_initialization(client):
     pool=client.app.state.pool
-    migrate(pool)
+    initialize_database(pool)
     with pool.connection() as db:
+        assert db.execute("SELECT to_regclass('migracoes_esquema') AS tabela").fetchone()['tabela'] is None
         columns=list(db.execute("SELECT table_name,column_name FROM information_schema.columns WHERE table_schema=current_schema()"))
         assert columns
         assert all(re.fullmatch(r'(cod|txt|num|dat|hor|flg|bin)_[a-z_]+',r['column_name']) for r in columns)

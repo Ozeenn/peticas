@@ -1,18 +1,16 @@
 """Peticas -> gateway autenticado -> WhatsApp Cloud API.
 
-O SQLite guarda hashes, estados e IDs da Meta, sem o texto das mensagens.
+O PostgreSQL guarda hashes, estados e IDs da Meta, sem o texto das mensagens.
 Uma chamada interrompida fica bloqueada para reconciliação, pois a Meta não
 oferece aqui uma garantia de envio único baseada na chave do Peticas.
 """
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 import hashlib
 import hmac
 import json
 import os
-from pathlib import Path
 import re
-import sqlite3
 import time
 
 import httpx
@@ -25,7 +23,6 @@ from starlette.concurrency import run_in_threadpool
 class Settings:
     token: str
     recipients: dict[str, tuple[str, ...]]
-    db_path: str
     dry_run: bool = True
     access_token: str = ""
     phone_number_id: str = ""
@@ -45,7 +42,6 @@ class Settings:
         return cls(
             token=os.getenv("PETICAS_GATEWAY_TOKEN", ""),
             recipients={"owner": numbers("WHATSAPP_OWNER_NUMBERS"), "volunteers": numbers("WHATSAPP_VOLUNTEERS_NUMBERS")},
-            db_path=os.getenv("WHATSAPP_GATEWAY_DB", "data/whatsapp-gateway.sqlite"),
             dry_run=dry_run == "true", access_token=os.getenv("WHATSAPP_ACCESS_TOKEN", ""),
             phone_number_id=os.getenv("WHATSAPP_PHONE_NUMBER_ID", ""),
             graph_version=os.getenv("WHATSAPP_GRAPH_VERSION", ""),
@@ -81,50 +77,6 @@ class Message(BaseModel):
     id: str = Field(min_length=1, max_length=200, pattern=r"^[a-zA-Z0-9:_-]+$")
     target: str = Field(pattern=r"^(owner|volunteers)$")
     text: str = Field(min_length=1, max_length=32000)
-
-
-class Store:
-    def __init__(self, path):
-        self.path = path
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with self.connection() as db:
-            db.execute("PRAGMA journal_mode=WAL")
-            db.executescript("""
-                CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS deliveries(
-                    job_id TEXT NOT NULL, recipient_hash TEXT NOT NULL,
-                    state TEXT NOT NULL, meta_id TEXT, updated INTEGER NOT NULL,
-                    PRIMARY KEY(job_id, recipient_hash));
-            """)
-
-    @contextmanager
-    def connection(self):
-        db = sqlite3.connect(self.path, timeout=5)
-        try:
-            with db:
-                yield db
-        finally:
-            db.close()
-
-    def claim(self, job_id, fingerprint, recipient_hash):
-        with self.connection() as db:
-            db.execute("BEGIN IMMEDIATE")
-            db.execute("INSERT OR IGNORE INTO jobs VALUES(?,?)", (job_id, fingerprint))
-            stored = db.execute("SELECT fingerprint FROM jobs WHERE id=?", (job_id,)).fetchone()[0]
-            if stored != fingerprint:
-                raise HTTPException(409, "Chave já utilizada para outro conteúdo ou configuração.")
-            row = db.execute("SELECT state,meta_id FROM deliveries WHERE job_id=? AND recipient_hash=?", (job_id, recipient_hash)).fetchone()
-            if row:
-                if row[0] == "accepted":
-                    return row[1]
-                if row[0] in ("sending", "uncertain"):
-                    raise HTTPException(409, "Envio em andamento ou incerto; confira antes de reenviar.")
-            db.execute("INSERT INTO deliveries VALUES(?,?, 'sending',NULL,?) ON CONFLICT(job_id,recipient_hash) DO UPDATE SET state='sending',updated=excluded.updated", (job_id, recipient_hash, int(time.time())))
-            return None
-
-    def finish(self, job_id, recipient_hash, state, meta_id=None):
-        with self.connection() as db:
-            db.execute("UPDATE deliveries SET state=?,meta_id=?,updated=? WHERE job_id=? AND recipient_hash=?", (state, meta_id, int(time.time()), job_id, recipient_hash))
 
 
 def build_payload(settings, message, recipient):
@@ -186,13 +138,13 @@ def deliver(settings, store, client, message):
     return {"id": message.id, "accepted": True, "simulated": False, "message_ids": message_ids}
 
 
-def create_app(settings=None, client=None, store_factory=Store):
+def create_app(settings=None, client=None, *, store_factory):
     @asynccontextmanager
     async def lifespan(app):
         config = settings or Settings.from_env()
         config.validate()
         app.state.settings = config
-        app.state.store = store_factory(config.db_path)
+        app.state.store = store_factory()
         app.state.client = client or httpx.Client(timeout=5, follow_redirects=False, trust_env=False)
         try:
             yield
@@ -226,6 +178,3 @@ def create_app(settings=None, client=None, store_factory=Store):
         return await run_in_threadpool(deliver, config, app.state.store, app.state.client, message)
 
     return app
-
-
-app = create_app()
