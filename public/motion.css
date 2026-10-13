@@ -1,0 +1,86 @@
+/* Movimentos curtos para navegação, diálogos e respostas ao toque. */
+:root {
+ --motion-fast: 160ms;
+ --motion-page: 240ms;
+ --motion-ease: cubic-bezier(.2,.7,.2,1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+ html { scroll-behavior: smooth; }
+
+ .content > *,
+ .public-main > :not(.demo):not(.footer),
+ .auth-card {
+  animation: page-arrive var(--motion-page) var(--motion-ease) backwards;
+ }
+
+ .modal-body > * {
+  animation: page-arrive 180ms var(--motion-ease) backwards;
+ }
+
+ .btn, .text-btn, .nav-btn, .tab, .close {
+  transition: background-color var(--motion-fast) ease,
+              color var(--motion-fast) ease,
+              border-color var(--motion-fast) ease,
+              box-shadow var(--motion-fast) ease,
+              filter var(--motion-fast) ease,
+              opacity var(--motion-fast) ease,
+              transform var(--motion-fast) var(--motion-ease);
+ }
+
+ .cat, .application {
+  transition: transform 200ms var(--motion-ease),
+              box-shadow 200ms ease, border-color 200ms ease;
+ }
+
+ input, select, textarea {
+  transition: border-color var(--motion-fast) ease,
+              box-shadow var(--motion-fast) ease,
+              background-color var(--motion-fast) ease;
+ }
+
+ .form-progress > div { transition: width var(--motion-page) var(--motion-ease); }
+
+ #modal {
+  opacity: 0;
+  transform: translateY(8px) scale(.985);
+  transition: opacity var(--motion-fast) ease,
+              transform 200ms var(--motion-ease),
+              display 200ms allow-discrete,
+              overlay 200ms allow-discrete;
+ }
+ #modal[open] { opacity: 1; transform: none; }
+ #modal::backdrop {
+  opacity: 0;
+  transition: opacity 200ms ease, display 200ms allow-discrete,
+              overlay 200ms allow-discrete;
+ }
+ #modal[open]::backdrop { opacity: 1; }
+
+ @starting-style {
+  #modal[open] { opacity: 0; transform: translateY(8px) scale(.985); }
+  #modal[open]::backdrop { opacity: 0; }
+ }
+
+ @media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover { transform: translateY(-1px); }
+  .cat:hover, .application:hover {
+   transform: translateY(-3px);
+   box-shadow: 0 10px 24px #092d8015;
+  }
+  .nav-btn:not(.active):hover { background-color: #ffffff75; }
+  .text-btn:hover { opacity: .8; }
+ }
+
+ .btn:not(:disabled):active, .close:active { transform: scale(.98); }
+}
+
+@keyframes page-arrive {
+ from { opacity: 0; transform: translateY(6px); }
+ to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+ html { scroll-behavior: auto; }
+ .loading-spinner { animation: none; }
+}
