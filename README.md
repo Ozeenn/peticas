@@ -1,54 +1,53 @@
 # Peticas — gestão e adoção
 
-Para entender o código e dar manutenção, comece pela [documentação técnica e trilha de aprendizagem](docs/README.md). Ela descreve a interface, a API, o banco, as permissões, os testes, a publicação e as limitações da implementação atual.
+Backend Python com FastAPI e PostgreSQL 17 normalizado. O frontend permanece em HTML, CSS e JavaScript. O banco usa tabelas e colunas em português, com prefixos de três letras por tipo ou finalidade: `cod_`, `txt_`, `num_`, `dat_`, `hor_`, `flg_` e `bin_`.
 
-HTML/CSS/JavaScript e API Cloudflare Worker. SQLite local e Cloudflare D1 (SQLite gerenciado) no Sites.
+A configuração, o modelo relacional, as migrações e os testes estão no [guia do backend Python e PostgreSQL](docs/08-backend-python-postgresql.md).
 
-## Uso local
+## Executar localmente
 
-Requer Node.js 24 e pnpm. Execute `pnpm install`, copie `.env.example` para `.env`, defina `ADMIN_SETUP_KEY` com uma chave aleatória longa e execute `pnpm dev`. Abra http://127.0.0.1:4173. Banco em `data/peticas.sqlite`, com migrações automáticas no servidor local. Nunca publique `.env` ou `data/`.
+Requer Docker Desktop em execução com contêineres Linux.
 
-## Primeiro acesso
+1. Copie `.env.example` para `.env` se esse arquivo ainda não existir.
+2. Configure `POSTGRES_PASSWORD` com senha aleatória longa de letras e números e `ADMIN_SETUP_KEY` com chave privada aleatória longa.
+3. Execute `docker compose up --build -d`.
+4. Abra http://127.0.0.1:4173.
 
-Área da equipe → Criar conta (somente durante a instalação). A primeira responsável informa a chave privada de instalação e define seu próprio e-mail e senha. Depois disso, o cadastro público fica bloqueado: somente a responsável cadastra voluntários em Equipe, com ficha e aceite do termo. Contas antigas pendentes podem ser liberadas pela responsável. Troca de senha autenticada em Minha conta; recuperação por e-mail ainda não configurada.
+A primeira responsável cria a conta com a chave de instalação. Depois, somente ela cadastra voluntários e define suas permissões. `SEED_DEMO=true` cria seis gatos fictícios uma única vez; use `false` para instalação sem exemplos. Não há importação automática dos bancos SQLite anteriores.
 
-## Implementado
+`docker compose down` encerra os serviços preservando o volume PostgreSQL. Os serviços `api` e `jobs` usam o mesmo banco. O gateway WhatsApp opcional também usa esse PostgreSQL. Não publique `.env` nem arquivos de banco.
 
-O escopo atualizado e as configurações estão em [Alterações após a reunião](docs/06-reuniao-e-implementacao.md).
+## Funcionalidades
 
-- Cadastro completo dos gatos, propostas de voluntários e revisão pela responsável.
-- Fotos reais; situações disponível, em tratamento, reservado e adotado.
-- Cadastro de voluntários exclusivo da responsável, com CPF e permissões individuais; ficha sem acesso ao sistema.
-- Formulário de adoção, análise, visita domiciliar, aprovação, reserva e conclusão; consulta por CPF e link individual.
-- Motivo de reprovação, termo em PDF, vídeo da residência, acompanhamento após adoção e devolução com histórico preservado.
-- Prontuário com prescrição, início/fim, intervalo em horas, aplicações e checklist de doses previstas.
-- Histórico do gato para o adotante em arquivo legível e imprimível.
-- Área pública de doações; Pix e links de campanhas configuráveis pela responsável.
-- Fila persistente para avisos de candidatura e relatório do fim de semana, com gateway Python para a WhatsApp Cloud API. O envio real precisa de credenciais, destinatários, hospedagem do gateway e agendamento na hospedagem do site. Veja [configuração e execução](docs/07-whatsapp-python.md).
-- Login, sessões revogáveis, restrições no servidor, proteção de origem e limites de tentativas.
+- Cadastro de gatos, propostas de voluntários, revisão, fotos e situações.
+- Fichas de voluntários, aceite, contas, permissões individuais e sessões revogáveis.
+- Entrevista de adoção, análise, visita, aprovação, reserva e conclusão.
+- Consulta por CPF com retorno apenas de data e etapa; acompanhamento privado por token.
+- Histórico, acompanhamento após adoção, devolução e anexos de vídeo e termo PDF.
+- Prontuário, prescrições, aplicações, encerramentos e checklist de doses previstas.
+- Pix e campanhas configuráveis.
+- Fila persistente de mensagens e relatório do fim de semana, processados por Python.
+- Transações, chaves estrangeiras e restrições para proteger reservas, doses e históricos.
 
-Estoque, compras e seus avisos saíram do escopo. Os registros antigos são preservados, e as rotas retiradas retornam 410.
+Estoque e compras permanecem fora do escopo. O envio WhatsApp depende das credenciais e destinatários da Meta; a configuração padrão simula os envios. Não há envio de e-mail ou assinatura digital. Os anexos aceitam até 8 MB e são armazenados no PostgreSQL. Comprovantes de vacinas na interface anterior ainda guardam somente o nome do arquivo.
 
-## Limites desta entrega
+## Comandos
 
-O gateway WhatsApp está implementado, mas o envio e o agendamento de produção ainda não estão configurados. Pix e links reais devem ser informados pela responsável. Uploads aceitam até 8 MB e usam R2 na hospedagem; comprovantes antigos de vacinação continuam com apenas o nome de arquivo. O termo pode ser anexado, sem assinatura digital. Os seis gatos iniciais continuam sendo exemplos fictícios. Não há envio de e-mail.
+| Comando | Função |
+| --- | --- |
+| `docker compose up --build -d` | Iniciar API, PostgreSQL e rotina de mensagens |
+| `pnpm dev` | Iniciar os serviços em primeiro plano |
+| `pnpm build` | Construir imagens Docker |
+| `docker compose --profile whatsapp up --build -d` | Ativar também o gateway WhatsApp |
+| `python -m pytest backend/tests -q` | Testar a API com `PETICAS_TEST_DATABASE_URL` configurada |
+| `python -m unittest services.whatsapp.test_gateway -q` | Testar os contratos do gateway existente |
+| `pnpm test` | Testes JavaScript da interface e da implementação legada |
+| `pnpm dev:legacy` / `pnpm build:legacy` | Executar/construir explicitamente o Worker/SQLite anterior |
 
-## Verificação e publicação
+## Estrutura
 
-`pnpm test`: testes integrados com SQLite real. `pnpm build`: gera Worker, assets e migrações. `public/` é a fonte da interface; `server/` contém a API; `drizzle/` contém migrações versionadas e imutáveis após publicação. A hospedagem aplica as migrações antes do Worker.
+`backend/` contém a API Python, a rotina de mensagens, o acesso PostgreSQL, as migrações e os testes. `public/` contém a interface. `compose.yaml` configura a execução local. `services/whatsapp/` contém a integração Python com a Meta, reutilizada com armazenamento PostgreSQL no novo Compose.
 
-## Versionamento no Git
-
-Versione o código em `public/`, `server/` e `services/`, os testes, as migrações e seus metadados, a documentação técnica, os arquivos de dependências (incluindo `pnpm-lock.yaml`) e os modelos `.env.example`. A configuração `.openai/hosting.json` é usada pelo build e contém o identificador do projeto de hospedagem, sem credenciais; ajuste esse identificador ao usar outra hospedagem.
-
-O `.gitignore` exclui arquivos `.env` e suas variantes locais, bancos SQLite, dependências, caches, logs, builds e entregas geradas. Os modelos `.env.example` continuam disponíveis para configurar uma nova instalação. O `.gitattributes` padroniza as quebras de linha do código em LF.
-
-Antes de criar um commit, execute `pnpm test`, `pnpm build` e os testes Python descritos em [Integração do WhatsApp](docs/07-whatsapp-python.md). Confira `git status --short` e `git diff --check`, depois revise o conteúdo selecionado com `git diff --cached`. Em uma nova instalação, use `pnpm install --frozen-lockfile` para respeitar as versões do lockfile.
-
-As migrações 0001 e 0002 acrescentam prontuários e índice de CPF sem apagar registros existentes. A interface carrega app.js, management.js, community.js e interview-lookup.js nesta ordem; o último inicia a sessão após registrar todos os fluxos.
-
-Adotantes podem consultar o próprio CPF em Minha candidatura (`/#tracking`), sem login. A API pública `POST /api/tracking/cpf` aceita CPF completo válido e retorna somente data e etapa, sem nomes, respostas, orientações privadas ou tokens. Limite de 10 tentativas por IP a cada 15 minutos e validação de origem. A consulta por CPF não comprova identidade; o link individual continua disponível para orientações da equipe. Entrevistas antigas precisam ter o CPF vinculado pela responsável.
+A implementação anterior em `server/`, `db/` e `drizzle/` foi preservada para referência e continua com banco independente. Os guias técnicos 01–07 descrevem principalmente essa versão. A [documentação técnica](docs/README.md) indica o novo guia. O Docker local não publica o site em produção; a hospedagem Python/PostgreSQL ainda será escolhida.
 
 Logo fornecida pelo usuário. Fotos ilustrativas: River Fx, Sergei Karakulov e Meaghan Cafferty / Unsplash.
-
-Recuperação de senha: use Esqueci minha senha com e-mail e código privado. Minha conta permite gerar um código mediante confirmação da senha atual. No primeiro uso do administrador, a chave ADMIN_SETUP_KEY serve como código inicial. Cada redefinição invalida o código anterior e todas as sessões; o novo código é mostrado uma vez. Apenas o hash do código fica em settings. Não há envio de e-mail nesta versão. O banco SQLite local e o D1 de produção são independentes.

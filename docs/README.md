@@ -1,3 +1,5 @@
+> A execução principal passou a usar Python e PostgreSQL. Consulte o [guia atualizado](08-backend-python-postgresql.md). Os capítulos anteriores abaixo descrevem a implementação legada Worker/SQLite.
+
 > Atualização de escopo em 7/10/2026: consulte [Alterações após a reunião](06-reuniao-e-implementacao.md). As descrições de estoque e permissões fixas nos guias anteriores são históricas.
 
 # Peticas — guia técnico para entender e manter o sistema

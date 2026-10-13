@@ -1,0 +1,74 @@
+name: peticas-python
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: peticas
+      POSTGRES_USER: peticas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U peticas -d peticas]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://peticas:${POSTGRES_PASSWORD}@db:5432/peticas
+      ADMIN_SETUP_KEY: ${ADMIN_SETUP_KEY:?Defina ADMIN_SETUP_KEY no arquivo .env}
+      SEED_DEMO: ${SEED_DEMO:-true}
+      WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
+      WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}
+      WHATSAPP_OWNER_TARGET: ${WHATSAPP_OWNER_TARGET:-owner}
+      WHATSAPP_VOLUNTEERS_TARGET: ${WHATSAPP_VOLUNTEERS_TARGET:-volunteers}
+    ports:
+      - "127.0.0.1:${PORT:-4173}:4173"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4173/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  jobs:
+    build: .
+    command: [python, -m, backend.jobs]
+    environment:
+      DATABASE_URL: postgresql://peticas:${POSTGRES_PASSWORD}@db:5432/peticas
+      WHATSAPP_WEBHOOK_URL: ${WHATSAPP_WEBHOOK_URL:-}
+      WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}
+      WHATSAPP_OWNER_TARGET: ${WHATSAPP_OWNER_TARGET:-owner}
+      WHATSAPP_VOLUNTEERS_TARGET: ${WHATSAPP_VOLUNTEERS_TARGET:-volunteers}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+  gateway:
+    build: .
+    profiles: [whatsapp]
+    command: [python, -m, uvicorn, backend.gateway:app, --host, 0.0.0.0, --port, '8001', --no-access-log]
+    environment:
+      DATABASE_URL: postgresql://peticas:${POSTGRES_PASSWORD}@db:5432/peticas
+      PETICAS_GATEWAY_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}
+      WHATSAPP_OWNER_NUMBERS: ${WHATSAPP_OWNER_NUMBERS:-}
+      WHATSAPP_VOLUNTEERS_NUMBERS: ${WHATSAPP_VOLUNTEERS_NUMBERS:-}
+      WHATSAPP_DRY_RUN: ${WHATSAPP_DRY_RUN:-true}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_GRAPH_VERSION: ${WHATSAPP_GRAPH_VERSION:-}
+      WHATSAPP_MESSAGE_MODE: ${WHATSAPP_MESSAGE_MODE:-text}
+      WHATSAPP_OWNER_TEMPLATE: ${WHATSAPP_OWNER_TEMPLATE:-}
+      WHATSAPP_VOLUNTEERS_TEMPLATE: ${WHATSAPP_VOLUNTEERS_TEMPLATE:-}
+      WHATSAPP_TEMPLATE_LANGUAGE: ${WHATSAPP_TEMPLATE_LANGUAGE:-pt_BR}
+      WHATSAPP_TEMPLATE_BODY_VALUE: ${WHATSAPP_TEMPLATE_BODY_VALUE:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  postgres_data:

@@ -3,8 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "dev": "node server/local.mjs",
+    "build": "docker compose build",
+    "build:legacy": "node scripts/build.mjs",
+    "dev": "docker compose up --build",
+    "dev:legacy": "node server/local.mjs",
+    "test:python": "python -m pytest backend/tests",
     "test": "node --test tests/*.test.mjs",
     "db:generate": "drizzle-kit generate"
   },

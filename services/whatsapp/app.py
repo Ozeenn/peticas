@@ -186,13 +186,13 @@ def deliver(settings, store, client, message):
     return {"id": message.id, "accepted": True, "simulated": False, "message_ids": message_ids}
 
 
-def create_app(settings=None, client=None):
+def create_app(settings=None, client=None, store_factory=Store):
     @asynccontextmanager
     async def lifespan(app):
         config = settings or Settings.from_env()
         config.validate()
         app.state.settings = config
-        app.state.store = Store(config.db_path)
+        app.state.store = store_factory(config.db_path)
         app.state.client = client or httpx.Client(timeout=5, follow_redirects=False, trust_env=False)
         try:
             yield
