@@ -106,3 +106,15 @@ Os testes criam esquemas exclusivos e removem apenas esses esquemas ao terminar.
 Sem Docker, instale `backend/requirements.txt` em um ambiente virtual, defina `DATABASE_URL`, `ADMIN_SETUP_KEY` e opcionalmente `SEED_DEMO` no ambiente e execute `python -m backend.run`. A rotina de mensagens é outro processo: `python -m backend.jobs`. O servidor Python não carrega `.env` automaticamente nessa modalidade.
 
 Os testes cobrem sessões, permissões, recuperação, privacidade da consulta por CPF, propostas, concorrência na reserva, devolução, anexos, doses, encerramento, fila, gateway, migrações e padrão dos nomes. A integração real com a Meta exige credenciais e não é exercitada pelos testes.
+
+## Acompanhamento e rotina dos voluntários
+
+A consulta por CPF lista todas as candidaturas vinculadas, com as cinco etapas do processo e as datas das etapas registradas. Respostas da entrevista, nomes, identificadores privados e mensagens da responsável não são retornados nessa consulta. Etapas antigas sem data registrada são identificadas sem inventar uma data. O link individual mostra o histórico e as mensagens da responsável, preservadas em `mensagens_candidaturas`; o candidato pode atualizar o acompanhamento pelo botão da página.
+
+Voluntários têm uma tela resumida com as doses programadas e as vacinas previstas. Quem possui `medical.write` pode registrar uma aplicação de medicamento ou uma vacina; quem possui apenas `medical.read` consulta sem botões de registro. A aplicação de vacina usa a conta autenticada como responsável, registra data e versão e impede duplicidade. IDs e atribuição das vacinas são preservados ao adicionar outros cuidados.
+
+Aplicações de medicamento exigem uma leitura recente de localização, solicitada apenas na confirmação do registro. Sem permissão ou sem localização, a aplicação não é gravada. Coordenadas, precisão e instante da coleta são armazenados em `localizacoes_aplicacoes`, com vínculo ao registro clínico; a API verifica os valores e aceita uma leitura de até dois minutos. A responsável visualiza esses dados e pode abrir o ponto no mapa. Voluntários, adotantes e consultas públicas não recebem as coordenadas. Registros anteriores à mudança permanecem sem localização.
+
+A localização depende da permissão explícita do dispositivo e de contexto seguro, conforme a [documentação da Geolocation API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition). Em produção, use HTTPS; para desenvolvimento, use a origem local. As coordenadas são informadas pelo navegador e não são uma comprovação de presença no gatil nem uma restrição por distância. Não há rastreamento contínuo.
+
+A migração `002_acompanhamento_cuidados.sql` acrescenta os históricos de mensagens e localização sem modificar a migração inicial nem apagar registros existentes. O frontend carrega `care-tracking.js` por último, depois de `requirements.js`, e só então inicia a sessão.

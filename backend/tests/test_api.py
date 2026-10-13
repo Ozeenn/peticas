@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import re
 import uuid
+import time
 
 import httpx
 import psycopg
@@ -93,7 +94,7 @@ def test_adoption_attachments_return_and_privacy(client):
     c=client; register(c)
     r=call(c,'adoptions','POST',{'cat':1,'answers':ANSWERS}); assert r.status_code==201,r.text
     rid=r.json()['request']['id']; token=r.json()['token']
-    assert set(call(c,'tracking/cpf','POST',{'cpf':ANSWERS['cpf']}).json()['results'][0])=={'stage','date'}
+    assert set(call(c,'tracking/cpf','POST',{'cpf':ANSWERS['cpf']}).json()['results'][0])=={'stage','date','returned','stageHistory'}
     assert call(c,'tracking/cpf','POST',{'cpf':'11111111111'}).status_code==400
     cookie=dict(c.cookies); c.cookies.clear()
     video={'ownerType':'video','ownerId':rid,'name':'video.mp4','mime':'video/mp4','data':base64.b64encode(b'0000ftyp0000').decode(),'token':token}
@@ -152,7 +153,8 @@ def test_medical_schedule_idempotency_completion_and_outbox(client,monkeypatch):
     r=call(c,'medical','POST',treatment); assert r.status_code==201,r.text
     assert call(c,'medical','POST',treatment).status_code==200
     doses=call(c,'medication-schedule?start=2026-10-10&end=2026-10-11').json()['schedule']; assert len(doses)==4
-    dose={'id':str(uuid.uuid4()),'kind':'application','catId':1,'treatmentId':tid,'date':'2026-10-10','time':'08:10','scheduledAt':doses[0]['scheduledAt']}
+    dose={'id':str(uuid.uuid4()),'kind':'application','catId':1,'treatmentId':tid,'date':'2026-10-10','time':'08:10','scheduledAt':doses[0]['scheduledAt'],
+          'location':{'latitude':-22.88,'longitude':-48.44,'accuracy':10,'capturedAt':int(time.time()*1000)}}
     assert call(c,'medical','POST',dose).status_code==201
     assert call(c,'medical','POST',dose).status_code==200
     assert call(c,'medical','POST',{**dose,'id':str(uuid.uuid4())}).status_code==409

@@ -86,7 +86,7 @@ def revision(db, expected=UNSPECIFIED, bump=False):
 def state(db):
     vaccines = []
     for r in db.execute('SELECT * FROM vacinas ORDER BY num_posicao,cod_identificador'):
-        vaccines.append({'cat': r['cat_id'], **{k:r[k] for k in ('label','date','status','done','applied','person','next','proof')}})
+        vaccines.append({'id':r['id'],'version':r['version'],'cat': r['cat_id'], **{k:r[k] for k in ('label','date','status','done','applied','person','next','proof')}})
     meds = [{'cat': r['cat_id'], **{k:r[k] for k in ('label','time','done')}} for r in db.execute('SELECT * FROM tarefas_cuidados ORDER BY num_posicao,cod_identificador')]
     return {'cats': cats(db), 'vaccines': vaccines, 'meds': meds,
             'version': db.execute('SELECT num_versao FROM revisoes_estado WHERE cod_identificador=1').fetchone()['version']}
@@ -121,15 +121,25 @@ def replace_state(db, b):
             insert_cat(db, {**checked,'id':c['id']})
     if set(current) - incoming:
         fail(400, 'O histórico dos gatos deve ser preservado.')
-    db.execute('DELETE FROM vacinas'); db.execute('DELETE FROM tarefas_cuidados')
+    old_vaccines={v['id']:v for v in state(db)['vaccines']}
+    vaccine_ids=set()
+    db.execute('DELETE FROM tarefas_cuidados')
     for i, v in enumerate(b['vaccines']):
         if v.get('cat') not in incoming or type(v.get('done')) is not bool:
             fail(400, 'Vacina inválida.')
         if v.get('applied'): date(v['applied'])
         if v.get('next'): date(v['next'])
         date(v.get('date'))
-        insert(db, 'vaccines', {'cat_id':v['cat'],'position':i,'done':v['done'],
-               **{k:text(v.get(k,''),300, k in ('label','date','status')) for k in ('label','date','status','applied','person','next','proof')}})
+        values={'cat_id':v['cat'],'position':i,'done':v['done'],
+                **{k:text(v.get(k,''),300,k in ('label','date','status')) for k in ('label','date','status','applied','person','next','proof')}}
+        if 'id' in v:
+            if v['id'] not in old_vaccines or v['id'] in vaccine_ids: fail(400,'Vacina inválida.')
+            vaccine_ids.add(v['id'])
+            if v != old_vaccines[v['id']]: fail(400,'Registre a aplicação de vacina pela ação individual.')
+        else:
+            if v['done']: fail(400,'Cadastre a vacina prevista antes de registrar a aplicação.')
+            insert(db,'vaccines',values)
+    if set(old_vaccines)-vaccine_ids: fail(400,'Preserve o histórico das vacinas cadastradas.')
     for i, v in enumerate(b['meds']):
         if v.get('cat') not in incoming or type(v.get('done')) is not bool:
             fail(400, 'Cuidado inválido.')
@@ -156,3 +166,22 @@ def medical(db):
             data['intervalHours'] = row['interval_hours']
         out.append({**{k:row[k] for k in ('id','cat_id','kind','treatment_id','user_id','created','responsible','scheduled_at')},'data':data})
     return out
+
+
+def stage_history(db,row):
+    from datetime import datetime, timezone
+    received=datetime.fromtimestamp(row['created']/1000,timezone.utc).isoformat(timespec='milliseconds').replace('+00:00','Z')
+    history=[{'stage':0,'date':received}]
+    history.extend({'stage':r['stage'],'date':r['date']} for r in db.execute(
+        'SELECT num_etapa,dat_data FROM historico_etapas_adocao WHERE cod_candidatura=%s ORDER BY cod_identificador',(row['id'],)))
+    return history
+
+
+def adoption_messages(db,rid):
+    return [{'text':r['message'],'date':r['created']} for r in db.execute(
+        'SELECT txt_mensagem,dat_cadastro FROM mensagens_candidaturas WHERE cod_candidatura=%s ORDER BY dat_cadastro,cod_identificador',(rid,))]
+
+
+def application_locations(db):
+    return {r['record_id']:{'latitude':r['latitude'],'longitude':r['longitude'],'accuracy':r['accuracy'],'capturedAt':r['captured_at']}
+            for r in db.execute('SELECT * FROM localizacoes_aplicacoes')}

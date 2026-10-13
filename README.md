@@ -22,9 +22,10 @@ A primeira responsável cria a conta com a chave de instalação. Depois, soment
 - Cadastro de gatos, propostas de voluntários, revisão, fotos e situações.
 - Fichas de voluntários, aceite, contas, permissões individuais e sessões revogáveis.
 - Entrevista de adoção, análise, visita, aprovação, reserva e conclusão.
-- Consulta por CPF com retorno apenas de data e etapa; acompanhamento privado por token.
+- Consulta por CPF de todas as candidaturas e suas etapas; mensagens da responsável pelo link privado.
 - Histórico, acompanhamento após adoção, devolução e anexos de vídeo e termo PDF.
-- Prontuário, prescrições, aplicações, encerramentos e checklist de doses previstas.
+- Prontuário, prescrições, aplicações, encerramentos e checklist de doses previstas; localização obrigatória nas aplicações de medicamento, acessível somente à responsável.
+- Área resumida dos voluntários para consultar medicações e registrar aplicações de medicamentos e vacinas.
 - Pix e campanhas configuráveis.
 - Fila persistente de mensagens e relatório do fim de semana, processados por Python.
 - Transações, chaves estrangeiras e restrições para proteger reservas, doses e históricos.

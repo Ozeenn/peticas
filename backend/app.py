@@ -3,6 +3,7 @@ import base64
 import hmac
 import json
 import logging
+import math
 import os
 import re
 import secrets
@@ -153,6 +154,7 @@ def dispatch(request,b,db,pool):
                     'cat_id':cat_id,'date':datetime.now(LOCAL_TZ).strftime('%d/%m/%Y'),'guidance':guidance,
                     'note':'Entrevista recebida pelo site.','created':now()})
         for k,v in answers.items(): repo.insert(db,'adoption_answers',{'adoption_id':rid,'question':k,'answer':v})
+        repo.insert(db,'adoption_messages',{'id':uid(),'adoption_id':rid,'message':guidance,'created':now()})
         queue(db,'adoption:'+rid,'owner','Nova candidatura de adoção recebida. Acesse a área da responsável para analisar.')
         return reply({'token':token,'request':{'id':rid,'name':answers['name'],'cat':cat_id,'stage':0,'guidance':guidance}},201)
     if path=='tracking' and method=='POST':
@@ -160,11 +162,14 @@ def dispatch(request,b,db,pool):
         r=db.execute('SELECT * FROM candidaturas_adocao WHERE txt_token_hash=%s',(digest(text(b.get('token'),100)),)).fetchone()
         if not r: fail(404,'Link de acompanhamento inválido.')
         a=repo.adoption(db,r)
-        return reply({'request':{k:a[k] for k in ('id','name','cat','stage','guidance','returned')}})
+        detail={k:a[k] for k in ('id','name','cat','stage','guidance','returned','rejectionReason')}
+        detail.update(stageHistory=repo.stage_history(db,r),messages=repo.adoption_messages(db,r['id']))
+        return reply({'request':detail})
     if path in ('tracking/cpf','adoptions/lookup') and method=='POST':
         if path=='adoptions/lookup': permit(user,'adoptions.lookup'); limit(pool,'adoption-lookup:'+user['id'],20)
         else: throttle('public-cpf-lookup',10)
-        return reply({'results':list(db.execute('SELECT num_etapa,dat_data FROM candidaturas_adocao WHERE txt_cpf_hash=%s ORDER BY dat_cadastro DESC',(cpf_hash(db,b.get('cpf')),)))})
+        matches=db.execute('SELECT * FROM candidaturas_adocao WHERE txt_cpf_hash=%s ORDER BY dat_cadastro DESC,cod_identificador',(cpf_hash(db,b.get('cpf')),)).fetchall()
+        return reply({'results':[{'stage':r['stage'],'date':r['date'],'returned':r['returned'],'stageHistory':repo.stage_history(db,r)} for r in matches]})
     if path=='adoption-records' and method=='POST':
         a=authorize_adoption(db,user,b.get('adoptionId'),b.get('token'))
         if a['stage']!=4: fail(403,'Histórico disponível após a adoção.')
@@ -315,15 +320,39 @@ def dispatch(request,b,db,pool):
             if stage==4: repo.update(db,'cats',{'status':'Adotado'},'id',cat_id)
             if old==3 and stage==-1: repo.update(db,'cats',{'status':'Disponível'},'id',row['cat_id'])
             rejection=text(b.get('rejectionReason') or row['rejection_reason'],3000) if stage==-1 else row['rejection_reason']
-            repo.update(db,'adoption_requests',{'cat_id':cat_id,'stage':stage,'guidance':text(b.get('guidance',''),3000,False),
+            guidance=text(b.get('guidance',''),3000,False)
+            repo.update(db,'adoption_requests',{'cat_id':cat_id,'stage':stage,'guidance':guidance,
                                               'rejection_reason':rejection,'version':row['version']+1},'id',rid)
+            if guidance and guidance!=row['guidance']:
+                repo.insert(db,'adoption_messages',{'id':uid(),'adoption_id':rid,'user_id':user['id'],'message':guidance,'created':now()})
             if stage!=old: repo.insert(db,'adoption_stage_history',{'adoption_id':rid,'stage':stage,'date':iso(datetime.now(timezone.utc)),'user_id':user['id']})
             return reply({'ok':True})
     if path=='medical':
-        if method=='GET': permit(user,'medical.read'); return reply({'records':repo.medical(db)})
+        if method=='GET':
+            permit(user,'medical.read'); records=repo.medical(db)
+            if user['role']=='admin':
+                locations=repo.application_locations(db)
+                for r in records:
+                    if r['id'] in locations: r['location']=locations[r['id']]
+            return reply({'records':records})
         if method=='POST': permit(user,'medical.write'); return save_medical(db,b,user)
+    if path=='vaccines' and method=='GET':
+        medical_access(user)
+        return reply({'vaccines':repo.state(db)['vaccines']})
+    match=re.fullmatch(r'vaccines/(\d+)/application',path)
+    if match and method=='POST':
+        permit(user,'medical.write'); repo.revision(db,bump=True)
+        vaccine=db.execute('SELECT * FROM vacinas WHERE cod_identificador=%s FOR UPDATE',(int(match[1]),)).fetchone()
+        if not vaccine: fail(404,'Vacina não encontrada.')
+        version(vaccine,b)
+        if vaccine['done']: fail(409,'Aplicação de vacina já registrada.')
+        applied=date(b.get('applied'))
+        if applied>datetime.now(LOCAL_TZ).strftime('%Y-%m-%d'): fail(400,'A aplicação não pode estar no futuro.')
+        repo.update(db,'vaccines',{'done':True,'applied':applied,'person':user['name'],'applied_by':user['id'],
+                    'applied_created':now(),'version':vaccine['version']+1},'id',vaccine['id'])
+        return reply({'ok':True},201)
     if path=='medication-schedule' and method=='GET':
-        permit(user,'medical.read'); start=date(request.query_params.get('start')); end=date(request.query_params.get('end'))
+        medical_access(user); start=date(request.query_params.get('start')); end=date(request.query_params.get('end'))
         difference=datetime.fromisoformat(end)-datetime.fromisoformat(start)
         if not timedelta(0)<=difference<=timedelta(days=7): fail(400,'Escolha um período de até 7 dias.')
         records=repo.medical(db)
@@ -374,6 +403,7 @@ def save_medical(db,b,user):
         if existing['cat_id']!=cat_id or existing['kind']!=kind or existing['user_id']!=user['id'] or existing['treatment_id']!=treatment_id or existing['data']!=d:
             fail(409,'Identificador já utilizado.')
         return reply({'ok':True})
+    location=validate_location(b.get('location')) if kind=='application' else None
     if treatment_id and db.execute("SELECT cod_identificador FROM registros_clinicos WHERE cod_tratamento=%s AND txt_tipo='completion'",(treatment_id,)).fetchone(): fail(409,'Este tratamento já foi encerrado.')
     if kind=='note' and not d['notes']: fail(400,'Descreva a evolução clínica.')
     if kind=='application' and d['scheduledAt']:
@@ -383,7 +413,29 @@ def save_medical(db,b,user):
         if not any(s['scheduledAt']==d['scheduledAt'] and s['treatmentId']==treatment_id for s in doses): fail(400,'Dose programada inválida.')
     repo.insert(db,'medical_records',{'id':event_id,'cat_id':cat_id,'kind':kind,'treatment_id':treatment_id,
                 'user_id':user['id'],'created':now(),**{repo.MED_FIELDS[k]:(v or None if k=='scheduledAt' else v) for k,v in d.items()}})
+    if location:
+        repo.insert(db,'application_locations',{'record_id':event_id,**location})
     return reply({'ok':True},201)
+
+
+def medical_access(user):
+    staff(user)
+    if not {'medical.read','medical.write'}.intersection(user['permissions']): fail(403,'Sem permissão para consultar cuidados.')
+
+
+def validate_location(location):
+    if not isinstance(location,dict): fail(400,'Autorize a localização para registrar a aplicação de medicamento.')
+    values={}
+    for key,minimum,maximum in [('latitude',-90,90),('longitude',-180,180),('accuracy',0,100000)]:
+        value=location.get(key)
+        if type(value) not in (int,float) or not math.isfinite(value) or not minimum<=value<=maximum:
+            fail(400,'Localização inválida. Solicite uma nova leitura do navegador.')
+        values[key]=value
+    captured=location.get('capturedAt')
+    if type(captured) not in (int,float) or not math.isfinite(captured) or not now()-120000<=captured<=now()+30000:
+        fail(400,'A localização expirou. Solicite uma nova leitura do navegador.')
+    values['captured_at']=int(captured)
+    return values
 
 
 def attachment_route(request,b,db,user,path,method):

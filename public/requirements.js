@@ -111,5 +111,3 @@ async function saveProjectSettings(e){await submit(e,async d=>{const campaigns=d
 
 const previousNextForm=nextForm;
 nextForm=async function(e){await previousNextForm(e);const help=$('#modal .help-line');if(formStep===4&&help&&help.textContent.includes('Fotos e vídeos'))help.textContent='Abra seu link individual para enviar o vídeo da residência e acompanhar a análise.';};
-
-boot();
