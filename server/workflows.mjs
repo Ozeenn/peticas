@@ -11,13 +11,18 @@ export async function queueMessage(env,key,target,message){
 }
 export async function dispatchMessages(env){
  if(!env.WHATSAPP_WEBHOOK_URL||!env.WHATSAPP_WEBHOOK_TOKEN)return;
- const endpoint=new URL(env.WHATSAPP_WEBHOOK_URL);if(endpoint.protocol!=='https:')return;
+ let endpoint;try{endpoint=new URL(env.WHATSAPP_WEBHOOK_URL)}catch{return;}
+ const localGateway=env.LOCAL_FILE_STORAGE===true&&endpoint.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(endpoint.hostname);
+ if(endpoint.protocol!=='https:'&&!localGateway)return;
+ if(endpoint.username||endpoint.password)return;
  for(const job of await rows(env,'SELECT * FROM message_jobs WHERE sent IS NULL AND attempts<10 AND next_attempt<=? ORDER BY created LIMIT 20',Date.now())){
   const target=job.target==='owner'?env.WHATSAPP_OWNER_TARGET:env.WHATSAPP_VOLUNTEERS_TARGET;if(!target)continue;
   const claimed=await run(env,'UPDATE message_jobs SET next_attempt=? WHERE id=? AND sent IS NULL AND next_attempt=?',Date.now()+120000,job.id,job.next_attempt);if(!claimed.meta.changes)continue;
   try{
-   const reply=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.WHATSAPP_WEBHOOK_TOKEN,'Idempotency-Key':job.id},body:JSON.stringify({id:job.id,target,text:job.message}),signal:AbortSignal.timeout(15000)});
+   const reply=await fetch(endpoint,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:'Bearer '+env.WHATSAPP_WEBHOOK_TOKEN,'Idempotency-Key':job.id},body:JSON.stringify({id:job.id,target,text:job.message}),signal:AbortSignal.timeout(15000)});
    if(!reply.ok)throw new Error('HTTP '+reply.status);
+   const receipt=await reply.json();
+   if(receipt.id!==job.id||receipt.accepted!==true||receipt.simulated!==false)throw new Error('Gateway não confirmou a aceitação real da mensagem.');
    await run(env,'UPDATE message_jobs SET sent=?,last_error=NULL WHERE id=?',Date.now(),job.id);
   }catch(e){await run(env,'UPDATE message_jobs SET attempts=attempts+1,next_attempt=?,last_error=? WHERE id=?',Date.now()+Math.min(3600000,60000*2**job.attempts),String(e.message).slice(0,200),job.id);}
  }

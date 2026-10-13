@@ -95,7 +95,7 @@ test('Weekly reports are queued once and failed deliveries remain retryable',asy
   let requests=0;globalThis.fetch=async()=>{requests++;return new Response('Unavailable',{status:503})};
   await dispatchMessages(env);await dispatchMessages(env);assert.equal(requests,1);
   let job=await db.prepare('SELECT * FROM message_jobs').first();assert.equal(job.attempts,1);assert.equal(job.sent,null);assert.equal(job.last_error,'HTTP 503');
-  db.prepare('UPDATE message_jobs SET next_attempt=0').run();globalThis.fetch=async()=>new Response('{}',{status:200});
+  db.prepare('UPDATE message_jobs SET next_attempt=0').run();globalThis.fetch=async()=>new Response(JSON.stringify({id:job.id,accepted:true,simulated:false}),{status:200});
   await dispatchMessages(env);job=await db.prepare('SELECT * FROM message_jobs').first();assert.ok(job.sent);assert.equal(job.last_error,null);
  }finally{Date.now=originalNow;globalThis.fetch=originalFetch;db.close();fs.rmSync(dir,{recursive:true,force:true});}
 });

@@ -174,4 +174,6 @@ Ao manter o sistema, procure sempre os dois lados: a função que envia o pedido
 
 ## Diagrama do banco
 
+Para configurar o serviço Python de mensagens, consulte [Integração do WhatsApp com Python](07-whatsapp-python.md). Essa integração foi acrescentada após a versão descrita no guia original.
+
 Consulte o [diagrama entidade-relacionamento](05-diagrama-banco.md), com todas as tabelas, campos e chaves do banco atual.

@@ -24,18 +24,26 @@ O escopo atualizado e as configurações estão em [Alterações após a reuniã
 - Prontuário com prescrição, início/fim, intervalo em horas, aplicações e checklist de doses previstas.
 - Histórico do gato para o adotante em arquivo legível e imprimível.
 - Área pública de doações; Pix e links de campanhas configuráveis pela responsável.
-- Fila persistente para avisos de candidatura e relatório do fim de semana. O envio real precisa de gateway WhatsApp, credenciais, destinatários e agendamento na hospedagem.
+- Fila persistente para avisos de candidatura e relatório do fim de semana, com gateway Python para a WhatsApp Cloud API. O envio real precisa de credenciais, destinatários, hospedagem do gateway e agendamento na hospedagem do site. Veja [configuração e execução](docs/07-whatsapp-python.md).
 - Login, sessões revogáveis, restrições no servidor, proteção de origem e limites de tentativas.
 
 Estoque, compras e seus avisos saíram do escopo. Os registros antigos são preservados, e as rotas retiradas retornam 410.
 
 ## Limites desta entrega
 
-Não há gateway WhatsApp ou agendamento de produção configurados. Pix e links reais devem ser informados pela responsável. Uploads aceitam até 8 MB e usam R2 na hospedagem; comprovantes antigos de vacinação continuam com apenas o nome de arquivo. O termo pode ser anexado, sem assinatura digital. Os seis gatos iniciais continuam sendo exemplos fictícios. Não há envio de e-mail.
+O gateway WhatsApp está implementado, mas o envio e o agendamento de produção ainda não estão configurados. Pix e links reais devem ser informados pela responsável. Uploads aceitam até 8 MB e usam R2 na hospedagem; comprovantes antigos de vacinação continuam com apenas o nome de arquivo. O termo pode ser anexado, sem assinatura digital. Os seis gatos iniciais continuam sendo exemplos fictícios. Não há envio de e-mail.
 
 ## Verificação e publicação
 
 `pnpm test`: testes integrados com SQLite real. `pnpm build`: gera Worker, assets e migrações. `public/` é a fonte da interface; `server/` contém a API; `drizzle/` contém migrações versionadas e imutáveis após publicação. A hospedagem aplica as migrações antes do Worker.
+
+## Versionamento no Git
+
+Versione o código em `public/`, `server/` e `services/`, os testes, as migrações e seus metadados, a documentação técnica, os arquivos de dependências (incluindo `pnpm-lock.yaml`) e os modelos `.env.example`. A configuração `.openai/hosting.json` é usada pelo build e contém o identificador do projeto de hospedagem, sem credenciais; ajuste esse identificador ao usar outra hospedagem.
+
+O `.gitignore` exclui arquivos `.env` e suas variantes locais, bancos SQLite, dependências, caches, logs, builds e entregas geradas. Os modelos `.env.example` continuam disponíveis para configurar uma nova instalação. O `.gitattributes` padroniza as quebras de linha do código em LF.
+
+Antes de criar um commit, execute `pnpm test`, `pnpm build` e os testes Python descritos em [Integração do WhatsApp](docs/07-whatsapp-python.md). Confira `git status --short` e `git diff --check`, depois revise o conteúdo selecionado com `git diff --cached`. Em uma nova instalação, use `pnpm install --frozen-lockfile` para respeitar as versões do lockfile.
 
 As migrações 0001 e 0002 acrescentam prontuários e índice de CPF sem apagar registros existentes. A interface carrega app.js, management.js, community.js e interview-lookup.js nesta ordem; o último inicia a sessão após registrar todos os fluxos.
 
