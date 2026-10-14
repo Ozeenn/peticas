@@ -18,3 +18,15 @@ test('OCI publishes only HTTPS ingress and trusts only its private reverse proxy
  assert.equal(config.services.db.volumes[0].type,'volume');
  assert.ok(config.services.proxy.volumes.some(v=>v.type==='volume'&&v.target==='/data'));
 });
+
+test('Micro profile preserves private services and sets explicit memory limits',()=>{
+ const config=JSON.parse(execFileSync('docker',['compose','--env-file','deploy/oci/.env.example','-f','deploy/oci/compose.yaml','-f','deploy/oci/compose.micro.yaml','config','--format','json'],{
+  encoding:'utf8',env:{...process.env,SITE_HOST:'peticas.example.test',ACME_EMAIL:'ops@example.test',POSTGRES_PASSWORD:'examplepasswordonly',ADMIN_SETUP_KEY:'examplekeyonly',PETICAS_APP_IMAGE:'peticas-oci-app:test',WHATSAPP_WEBHOOK_URL:'',WHATSAPP_WEBHOOK_TOKEN:''}
+ }));
+ assert.equal(config.services.api.image,config.services.jobs.image);
+ assert.equal(config.services.api.image,'peticas-oci-app:test');
+ for(const name of ['db','api','jobs','proxy'])assert.ok(config.services[name].mem_limit>0);
+ for(const name of ['db','api','jobs'])assert.equal(config.services[name].ports,undefined);
+ assert.ok(config.services.db.command.includes('shared_buffers=32MB'));
+ assert.equal(config.services.api.environment.SEED_DEMO,'false');
+});

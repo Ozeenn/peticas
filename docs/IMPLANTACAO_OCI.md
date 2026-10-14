@@ -52,6 +52,12 @@ Esta composição não ativa o gateway Meta local. Se precisar dele, prepare sua
 
 ## 4. Backup e recuperação
 
+### Piloto gratuito com 1 GB de RAM
+
+Use uma imagem Ubuntu suportada (22.04, 24.04 ou 26.04), configure swap de 2 GB e teste o consumo real. Swap usa disco e pode tornar o sistema lento; não aumenta a RAM física. `deploy/oci/compose.micro.yaml` limita a memória dos processos e reduz parâmetros do PostgreSQL. Para esse perfil, acrescente `-f deploy/oci/compose.micro.yaml` a todos os comandos da composição, inclusive atualizações. O backup usa a composição base para acessar o mesmo serviço e volume.
+
+Construa a imagem fora da VM e transfira-a com `docker save`/`docker load` por SSH autenticado. Configure `PETICAS_APP_IMAGE` com o tag da release enviada e inicie com `up --no-build -d`. API e jobs compartilham essa imagem. O tag deve existir localmente no servidor antes da inicialização. Se limites de memória encerrarem um processo, examine `docker stats`, eventos/OOM e carga, e dimensione a VM antes de aumentar a utilização. Esse perfil é destinado a um piloto com poucos acessos, sem promessa de capacidade comercial.
+
 Fotos, vídeos e documentos enviados estão no PostgreSQL e entram no dump. Certificados do Caddy ficam no volume `caddy_data`. A VM única e seus volumes são um ponto de falha; não equivalem a alta disponibilidade.
 
 ```bash

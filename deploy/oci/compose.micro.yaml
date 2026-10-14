@@ -1,0 +1,11 @@
+# Optional override for the 1 GB pilot. Not a guarantee of production capacity.
+services:
+  db:
+    mem_limit: 256m
+    command: [postgres, -c, shared_buffers=32MB, -c, work_mem=2MB, -c, maintenance_work_mem=32MB, -c, max_connections=40]
+  api:
+    mem_limit: 320m
+  jobs:
+    mem_limit: 128m
+  proxy:
+    mem_limit: 96m
