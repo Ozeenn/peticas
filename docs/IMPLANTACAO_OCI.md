@@ -84,6 +84,20 @@ O banco de validação também contém dados pessoais: restrinja o acesso e desc
 
 ## 5. Atualizar e operar
 
+### Acessar o banco a partir do Windows
+
+Na raiz do projeto, execute no PowerShell:
+
+```powershell
+.\deploy\oci\acessar-banco.ps1 -Servidor SEU_IP_PUBLICO -Chave 'C:\caminho\chave.key'
+```
+
+O modo padrão abre `psql` via SSH, com o usuário PostgreSQL de administração `peticas`. Para consultar, use `\dt`, `\d gatos` e `SELECT cod_identificador, txt_nome FROM gatos LIMIT 10;`; saia com `\q`. Esse acesso também permite alterações: confira o alvo e faça backup antes de modificar dados ou estrutura.
+
+Para DBeaver/pgAdmin, acrescente `-Modo Tunel`. Mantenha a janela aberta e configure o cliente para PostgreSQL, host `127.0.0.1`, porta `15433`, banco `peticas`, usuário `peticas`. A senha é `POSTGRES_PASSWORD` de `/opt/peticas/deploy/oci/.env` na VM, não a senha do banco local. O túnel SSH já protege o trajeto; PostgreSQL neste perfil não tem TLS próprio, portanto não exija TLS na conexão interna do cliente. Não compartilhe a senha ou capturas de configuração com credenciais. Não crie regra de entrada 5432 na OCI.
+
+O script usa uma cópia temporária da chave com ACL restrita e apaga a cópia ao encerrar. A chave original é preservada. Se o PowerShell bloquear scripts, revise o arquivo e execute usando `powershell -NoProfile -ExecutionPolicy Bypass -File .\deploy\oci\acessar-banco.ps1` com os mesmos parâmetros; isso vale apenas para esse processo, sem alterar a política permanente. A identidade do servidor usa o arquivo de hosts da implantação; uma divergência deve ser investigada, não ignorada. Para uso frequente só de consulta, crie um usuário PostgreSQL com privilégios de leitura em vez de compartilhar o usuário administrativo.
+
 1. Teste a nova versão, registre o commit e faça backup antes da atualização.
 2. Se o esquema mudou, planeje e aplique SQL explícito durante uma janela de manutenção. O projeto não migra bancos existentes automaticamente.
 3. Atualize o checkout e rode `up --build -d` com o mesmo `--env-file` e `-f` acima.
