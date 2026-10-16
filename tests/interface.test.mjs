@@ -101,3 +101,30 @@ test('Privacy choices remain separate from interview answers and unchecked video
  assert.equal('privacyAcknowledged' in requests[0].data.answers,false);
  assert.equal('homeVideoConsent' in requests[0].data.answers,false);
 });
+
+test('General terms acceptance remembers the version, renews on changes and tolerates blocked storage',()=>{
+ const values=new Map();
+ const context=vm.createContext({Date,document:{querySelector:()=>null},privacyNotice:{version:'v1'},ready:true,render(){},toast(){},localStorage:{getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)}});
+ const source=fs.readFileSync('public/documents-privacy.js','utf8');
+ vm.runInContext(source.slice(source.indexOf('const siteAcceptanceKey='),source.indexOf('const siteAcceptanceRender=')),context);
+ const run=source=>vm.runInContext(source,context);
+ assert.equal(run('siteAcceptancePending()'),true);
+ assert.match(run('siteAcceptanceBanner()'),/Termos de Uso/);
+ assert.match(run('siteAcceptanceBanner()'),/Política de Privacidade/);
+ run('acceptSiteTerms()');
+ assert.equal(run('siteAcceptancePending()'),false);
+ assert.equal(JSON.parse(values.get('peticas:site-acceptance')).version,'v1');
+ assert.ok(JSON.parse(values.get('peticas:site-acceptance')).acceptedAt);
+ run("siteAcceptanceSession=''"); // Another load reads the saved browser preference.
+ assert.equal(run('siteAcceptancePending()'),false);
+ run("privacyNotice.version='v2'");
+ assert.equal(run('siteAcceptancePending()'),true);
+ run('acceptSiteTerms();reviewSiteAcceptance()');
+ assert.equal(run('siteAcceptancePending()'),true);
+ values.set('peticas:site-acceptance','broken JSON');
+ assert.equal(run('siteAcceptancePending()'),true);
+ run("localStorage.getItem=()=>{throw Error('blocked')};localStorage.setItem=()=>{throw Error('blocked')};acceptSiteTerms()");
+ assert.equal(run('siteAcceptancePending()'),false);
+ run("siteAcceptanceSession=''");
+ assert.equal(run('siteAcceptancePending()'),true);
+});

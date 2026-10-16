@@ -4,6 +4,10 @@ Modelo de organização preparado para revisão pela responsável do Gatil Petic
 
 ## 1. Ciência e consentimento são registros diferentes
 
+O site apresenta um aviso geral com acesso aos Termos de Uso e à Política de Privacidade, inclusive fora do fluxo de adoção. O botão de aceite lembra a versão e a data neste navegador, em `localStorage`, sem identificar a pessoa nem criar um registro no banco. Se o armazenamento estiver indisponível, a preferência dura apenas na sessão aberta. A navegação e a leitura dos documentos continuam disponíveis; o rodapé permite revisar o aceite. Uma nova versão dos documentos faz o aviso reaparecer.
+
+Na candidatura, o aceite dos termos e a ciência da política permanecem explícitos. O registro versionado no banco preserva ambos os textos no mesmo snapshot. Os aceites anteriores continuam associados aos documentos que foram apresentados na ocasião; o aceite geral do navegador não marca automaticamente as escolhas do formulário nem autoriza vídeo. O site utiliza cookie de sessão para o acesso da equipe; o aviso não inclui categorias de rastreamento ou publicidade.
+
 A candidatura é solicitada pela própria pessoa. O aviso informa o uso de dados necessários para analisar, formalizar e acompanhar a adoção. A declaração “li e estou ciente” registra ciência, não uma autorização irrestrita.
 
 O vídeo da residência tem escolha separada e opcional. A finalidade proposta é avaliar a proteção do lar, com acesso da responsável. A recusa não impede a candidatura: combine visita ou outra alternativa adequada. A autorização pode ser revogada. O sistema bloqueia novos uploads após a escolha negativa; o tratamento de um vídeo já armazenado exige análise manual do pedido e da conservação cabível.

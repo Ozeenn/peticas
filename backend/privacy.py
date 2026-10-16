@@ -3,7 +3,7 @@ import hashlib
 import json
 from .security import fail, text, email, now, uid
 
-TEMPLATE_VERSION='2026-10-13.1'
+TEMPLATE_VERSION='2026-10-16.1'
 DEFAULTS={'controller':'Gatil Peticas','identifier':'','address':'','contact':'','retention':'Revisar periodicamente a necessidade de cada registro; os prazos devem ser definidos pela responsável conforme a finalidade e as obrigações aplicáveis.'}
 
 
@@ -15,6 +15,8 @@ def config(db):
 def notice(db):
     c=config(db)
     sections=[
+        ('Uso do site','Esta política abrange a navegação no Peticas, o contato com a equipe, as candidaturas e o acesso de voluntários e da responsável. Cada recurso utiliza os dados necessários à sua finalidade. O aceite dos Termos de Uso e a ciência desta política não autorizam publicidade nem substituem escolhas específicas, como a autorização opcional do vídeo.'),
+        ('Armazenamento no navegador','O site utiliza um cookie de sessão para o acesso da equipe e armazenamento local para lembrar a versão dos termos e da política reconhecida neste navegador. Essa preferência contém a versão e a data do aceite, sem dados da candidatura. Você pode revisar os documentos pelo rodapé ou remover a preferência nas configurações do navegador.'),
         ('Responsável e contato',f"Responsável pelo tratamento: {c['controller']}. Endereço: {c['address'] or 'a completar pela responsável'}. Canal para direitos: {c['contact'] or 'formulário de pedidos de privacidade disponível neste site'}. A identificação documental da responsável é utilizada nos termos internos e não é exposta neste aviso."),
         ('Dados e finalidades','Nome, CPF, idade, contato, endereço e respostas sobre a segurança do lar são usados para avaliar a candidatura solicitada, combinar a visita, formalizar e acompanhar a adoção. O tratamento necessário aos procedimentos preliminares e à adoção deve ser avaliado pela responsável no contexto do art. 7º, V, da LGPD. A ciência deste aviso não é uma autorização genérica nem substitui essa avaliação.'),
         ('Vídeo da residência - consentimento separado','O envio de vídeo é opcional. Com autorização específica, o vídeo é acessado pela responsável para avaliar a proteção do lar. Não filme rostos, documentos, conversas ou dados de terceiros. Recusar ou revogar essa autorização não impede a candidatura; a equipe pode combinar uma visita ou outra forma adequada de avaliação. O material não será usado para publicidade.'),
@@ -24,9 +26,17 @@ def notice(db):
         ('Seus direitos','Você pode solicitar confirmação e acesso, correção, informações sobre compartilhamento, anonimização, bloqueio ou eliminação quando cabíveis, e revogação do consentimento. Use o canal indicado ou o formulário deste site. O pedido é gratuito; a equipe verificará sua identidade de forma proporcional antes de fornecer dados ou alterar registros. A exclusão não é automática: a responsável avaliará a finalidade e eventual conservação legal e informará o resultado. É possível procurar a ANPD.'),
         ('Minimização','Informe apenas o necessário para a adoção. Não inclua nomes, documentos, condições de saúde ou imagens de outras pessoas. A avaliação e as decisões são realizadas pela responsável; o sistema não decide candidaturas automaticamente.'),
     ]
-    snapshot='\n\n'.join(title+'\n'+body for title,body in sections)
+    terms=[
+        ('Sobre o Peticas','O Peticas apresenta os gatos do gatil e permite solicitar e acompanhar adoções, entrar em contato e organizar as atividades da equipe. A disponibilidade dos animais e as informações são atualizadas pela responsável.'),
+        ('Uso responsável','Ao utilizar os serviços, forneça informações verdadeiras e apenas os dados solicitados. Respeite as pessoas e os animais. Não envie conteúdo ofensivo, arquivos maliciosos ou dados e imagens de terceiros sem autorização. Não tente acessar registros ou contas de outras pessoas.'),
+        ('Candidaturas e adoção','Enviar uma candidatura não garante reserva ou adoção. A equipe analisa a compatibilidade e a segurança do lar, combina as próximas etapas e formaliza a adoção em termo próprio. O aceite destes termos não substitui o termo de adoção.'),
+        ('Acessos e comunicação','Guarde sua senha e o link privado da candidatura com cuidado. Utilize os canais do gatil para esclarecer dúvidas ou comunicar problemas. O acesso da equipe é pessoal e limitado às atividades autorizadas.'),
+        ('Privacidade e escolhas opcionais','Os dados são tratados conforme a Política de Privacidade. A autorização de vídeo da residência é separada e opcional; a equipe pode combinar uma visita ou outra forma de avaliação. O aceite geral não autoriza o uso de imagens para publicidade.'),
+        ('Atualizações e contato','Os termos e a política podem ser atualizados para refletir mudanças no serviço. Quando a versão mudar, o site apresentará novamente o aviso. Consulte a identificação e o canal de contato na Política de Privacidade.'),
+    ]
+    snapshot='\n\n'.join(title+'\n'+body for title,body in [('Termos de Uso',''),*terms,('Política de Privacidade',''),*sections])
     version=TEMPLATE_VERSION+'-'+hashlib.sha256(snapshot.encode()).hexdigest()[:12]
-    return {'version':version,'templateVersion':TEMPLATE_VERSION,'config':c,'sections':[{'title':t,'text':b} for t,b in sections],
+    return {'version':version,'templateVersion':TEMPLATE_VERSION,'config':c,'sections':[{'title':t,'text':b} for t,b in sections],'terms':[{'title':t,'text':b} for t,b in terms],
             'snapshot':snapshot,'draft':not all(c[k] for k in ('identifier','address','contact'))}
 
 
