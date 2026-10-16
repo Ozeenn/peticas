@@ -93,3 +93,5 @@ Se houver perda de arquivo, acesso indevido, link privado compartilhado ou outro
 - [Direitos dos titulares - ANPD](https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados/direito-dos-titulares): orientação sobre exercício de direitos e pedidos ao controlador.
 
 As decisões sobre finalidades, bases legais, retenção e atendimento pertencem à responsável pelo tratamento. Atualize este procedimento quando o funcionamento, os prestadores ou as normas aplicáveis mudarem.
+
+A política pública apresenta o endereço de visita já informado no site como contato padrão e o formulário de privacidade como canal de direitos. Instruções para configurar e revisar informações ficam na área administrativa. O texto público descreve o uso do serviço, sem avisos de configuração pendente.
