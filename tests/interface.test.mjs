@@ -15,7 +15,7 @@ test('Final interface loads in script order and respects navigation permissions'
  evaluate("account={role:'staff',name:'Volunteer',permissions:['cats.submit']};view='applications';render()");assert.equal(evaluate('view'),'cats');assert.doesNotMatch(elements.get('#app').innerHTML,/go\('applications'\)|loadTeam\(\)/);
  evaluate("editCat(null)");assert.match(elements.get('#modal').innerHTML,/Enviar para aprovação/);
  evaluate("account={role:'staff',name:'Reader',permissions:['medical.read']};view='health';render()");assert.match(elements.get('.content').innerHTML,/Checklist das medicações/);assert.doesNotMatch(elements.get('#app').innerHTML,/go\('cats'\)/);
- evaluate("view='public';render()");assert.match(elements.get('#app').innerHTML,/não recebe doações de ração/);
+ evaluate("view='public';render()");assert.match(elements.get('#app').innerHTML,/não recebe doações de ração/);assert.doesNotMatch(elements.get('#app').innerHTML,/esboço|dados fictícios|animais e candidaturas fictícios|demonstração/i);
  evaluate("account={role:'admin',name:'Cris',permissions:[]};view='settings';render()");assert.match(elements.get('.content').innerHTML,/aguardando configuração/);
 });
 
