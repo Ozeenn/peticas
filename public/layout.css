@@ -126,3 +126,17 @@ body:has(.site-acceptance){padding-bottom:240px}
 .shop-product-content>p{color:var(--muted);min-height:78px}
 @media(max-width:850px){.public-header{flex-wrap:wrap;gap:12px}.public-tabs{order:3;width:100%}.shop-products{grid-template-columns:1fr}.shop-product-content>p{min-height:0}}
 @media(max-width:600px){.shop-product-content{padding:22px}.shop-art svg{height:220px}}
+.shop-collection-info{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;margin-top:24px;padding:22px;border-radius:18px;background:#eaf5fb;color:var(--navy)}
+.shop-collection-info>strong{font-size:28px}.shop-collection-info small{display:block;font-size:13px;font-weight:500}
+.shop-catalog-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin:32px 0 20px}
+.shop-catalog-head p{margin:8px 0 0}.shop-color-filters{display:flex;gap:4px;flex-wrap:wrap}
+.shop-shirt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.shop-shirt{min-width:0;overflow:hidden}.shop-photo{display:block;position:relative;width:100%;padding:0;background:#faf8f4;color:var(--navy)}
+.shop-photo img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain}
+.shop-photo>span{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;background:#edf4fa;font-size:13px;font-weight:700}
+.shop-shirt-content{padding:22px}.shop-shirt-content h3{margin-top:10px}.shop-shirt-content p{min-height:48px;margin:8px 0 16px;color:var(--muted)}
+.shop-shirt-price{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}.shop-shirt-price strong{font-size:22px;color:var(--navy)}.shop-shirt-price small{color:var(--muted)}
+.shop-enlarged{display:block;width:100%;max-height:75vh;object-fit:contain}.shop-size-guide caption{text-align:left;padding:14px 0;color:var(--muted)}
+.shop-size-guide .text-btn{margin-top:18px}.shop-mugs{display:flex;align-items:center;justify-content:space-between;gap:20px}.shop-mugs h2{margin-top:10px}
+@media(max-width:1000px){.shop-shirt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){.shop-shirt-grid{grid-template-columns:1fr}.shop-collection-info{padding:18px}.shop-catalog-head{align-items:flex-start}.shop-mugs{align-items:flex-start;flex-direction:column}}

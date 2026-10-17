@@ -16,7 +16,12 @@ test('Final interface loads in script order and respects navigation permissions'
  evaluate("editCat(null)");assert.match(elements.get('#modal').innerHTML,/Enviar para aprovação/);
  evaluate("account={role:'staff',name:'Reader',permissions:['medical.read']};view='health';render()");assert.match(elements.get('.content').innerHTML,/Checklist das medicações/);assert.doesNotMatch(elements.get('#app').innerHTML,/go\('cats'\)/);
  evaluate("view='public';render()");assert.match(elements.get('#app').innerHTML,/não recebe doações de ração/);assert.doesNotMatch(elements.get('#app').innerHTML,/esboço|dados fictícios|animais e candidaturas fictícios|demonstração/i);
- evaluate("account=null;view='shop';render()");assert.match(elements.get('#app').innerHTML,/Camisas personalizadas/);assert.match(elements.get('#app').innerHTML,/Canecas personalizadas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Entrar no Peticas|name="password"|onsubmit=|Encomendar|Pagar|Comprar agora/);assert.match(elements.get('#app').innerHTML,/Nossa coleção está chegando/);
+ evaluate("account=null;view='shop';render()");assert.match(elements.get('#app').innerHTML,/Camisas personalizadas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Canecas|Encomendas:|23\/10/);assert.doesNotMatch(elements.get('#app').innerHTML,/Entrar no Peticas|name="password"|onsubmit=|Encomendar|Pagar|Comprar agora/);assert.match(elements.get('#app').innerHTML,/R\$ 49,99/);assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,11);
+ for(const shirt of evaluate('shopShirts'))assert.ok(fs.existsSync('public/'+evaluate('shopShirtImage('+JSON.stringify(shirt)+')')));
+ evaluate("setShopColor('Preta')");assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,6);
+ evaluate("setShopColor('Clara')");assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,5);
+ evaluate("setShopColor('Todas');showShopPhoto('james-paz')");assert.match(elements.get('#modal').innerHTML,/camisa-james-paz.jpg/);
+ evaluate('showShopSizeGuide()');assert.match(elements.get('#modal').innerHTML,/49 cm/);assert.match(elements.get('#modal').innerHTML,/Como medir/);assert.doesNotMatch(elements.get('#modal').innerHTML,/23\/10|tabela-medidas.jpg/);
  assert.doesNotMatch(evaluate('privacyContents()'),/Modelo para revisão|deve completar/);
  evaluate("account={role:'admin',name:'Cris',permissions:[]};view='settings';render()");assert.match(elements.get('.content').innerHTML,/aguardando configuração/);
 });
