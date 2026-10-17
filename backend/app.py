@@ -20,7 +20,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .db import make_pool, initialize_database, seed_demo, ROOT
 from . import repository as repo
-from . import privacy, reports
+from . import privacy, reports, shop
 from .security import (PERMISSIONS, LOCAL_TZ, now, uid, fail, text, digest, password_hash, check_password,
                        validate_password, email, cpf, cpf_hash, limit, get_user, safe_user, staff, admin, permit, date)
 from .schedule import medication_schedule, unscheduled, iso
@@ -79,6 +79,9 @@ def dispatch(request,b,db,pool):
     user = get_user(db,request)
     ip = request.client.host if request.client else 'local'
     throttle = lambda key,maximum=10: limit(pool,key+':'+ip,maximum)
+    if path.startswith('shop/'):
+        data,status=shop.route(db,path,method,b,user,throttle)
+        return reply(data,status)
     if path=='privacy' and method=='GET':
         current=privacy.notice(db)
         current['config']={k:v for k,v in current['config'].items() if k!='identifier'}

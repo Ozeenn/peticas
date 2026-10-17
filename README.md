@@ -53,6 +53,6 @@ Estoque e compras permanecem fora do escopo. O envio WhatsApp depende das creden
 
 `backend/` contém a API Python, a rotina de mensagens, o acesso PostgreSQL, o esquema SQL e os testes. `public/` contém a interface. `compose.yaml` configura a execução local. A integração Python com a Meta também está em `backend/`.
 
-O esquema completo está em `backend/schema.sql`. A API cria as tabelas quando o banco está vazio e valida um banco existente sem recriá-lo. Não há arquivos nem tabela de histórico de migrações. Mudanças futuras da estrutura de um banco preenchido devem ser aplicadas explicitamente por SQL, depois de backup. A [documentação técnica](docs/README.md) reúne os guias atuais.
+O esquema está em `backend/schema.sql` (gestão do gatil) e `backend/shop_schema.sql` (loja). A API cria as tabelas quando o banco está vazio e valida um banco existente sem recriá-lo. Não há tabela de histórico de migrações. Para adicionar a loja a uma instalação existente, execute explicitamente `python -m backend.shop_migrate` com acesso ao banco, antes de iniciar a nova API; veja `docs/LOJA_BANCO.md`. Mudanças futuras da estrutura de um banco preenchido devem ser aplicadas explicitamente por SQL, depois de backup. A [documentação técnica](docs/README.md) reúne os guias atuais.
 
 Logo fornecida pelo usuário. Fotos ilustrativas: River Fx, Sergei Karakulov e Meaghan Cafferty / Unsplash.

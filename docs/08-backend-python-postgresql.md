@@ -79,9 +79,10 @@ As transações são confirmadas ao concluir a operação e desfeitas em caso de
 - `backend/jobs.py`: rotina de mensagens e relatório de sábado/domingo, enfileirado às sextas no horário de São Paulo.
 - `backend/gateway.py`: armazenamento PostgreSQL para o gateway WhatsApp.
 - `backend/db.py`: pool, criação inicial do banco e carga opcional dos exemplos.
-- `backend/schema.sql`: estrutura atual e completa do PostgreSQL.
+- `backend/schema.sql`: estrutura de gestão do gatil.
+- `backend/shop_schema.sql`: estrutura complementar da loja; leia [LOJA_BANCO.md](LOJA_BANCO.md).
 
-O banco vazio é criado a partir de `backend/schema.sql`, em uma transação sob bloqueio entre instâncias. Em bancos preenchidos, o início da API confere as tabelas e colunas necessárias sem reaplicar o esquema. Não existe histórico de migrações. Atualizações futuras de estrutura devem ser aplicadas explicitamente por SQL, preservando os dados, antes de iniciar uma versão que dependa delas. Faça backup com `pg_dump` antes dessas mudanças.
+O banco vazio é criado a partir de `backend/schema.sql` e `backend/shop_schema.sql`, em uma transação sob bloqueio entre instâncias. Em bancos preenchidos, o início da API confere as tabelas e colunas necessárias sem reaplicar o esquema. Não existe histórico de migrações. Atualizações futuras de estrutura devem ser aplicadas explicitamente por SQL, preservando os dados, antes de iniciar uma versão que dependa delas. Faça backup com `pg_dump` antes dessas mudanças.
 
 ## WhatsApp opcional
 

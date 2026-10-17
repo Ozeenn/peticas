@@ -24,12 +24,14 @@ def make_pool(url=None):
 def initialize_database(pool):
     with pool.connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(742091)')
-        content=(ROOT/'backend/schema.sql').read_text(encoding='utf-8')
+        content=(ROOT/'backend/schema.sql').read_text(encoding='utf-8')+'\n'+(ROOT/'backend/shop_schema.sql').read_text(encoding='utf-8')
         tables=re.findall(r'CREATE TABLE ([a-z_]+)\s*\((.*?)\);',content,re.S)
         existing={r['table_name'] for r in db.execute('SELECT table_name FROM information_schema.tables WHERE table_schema=current_schema()')}
         expected={name for name,_ in tables}
         if not existing.intersection(expected):
             db.execute(content)
+            from .shop import seed_catalog
+            seed_catalog(db)
         else:
             if not expected.issubset(existing):
                 raise RuntimeError('Banco incompleto. Confira backend/schema.sql antes de iniciar a aplicação.')

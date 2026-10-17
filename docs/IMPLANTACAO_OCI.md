@@ -103,6 +103,8 @@ O script usa uma cópia temporária da chave com ACL restrita e apaga a cópia a
 3. Atualize o checkout e rode `up --build -d` com o mesmo `--env-file` e `-f` acima.
 4. Confira saúde, HTTPS, login, PDF, anexos, candidatura e permissão de localização. Faça rollback de código apenas se o esquema continuar compatível.
 
+Para a versão da loja com carrinho no servidor, aplique explicitamente `python -m backend.shop_migrate` a partir da nova imagem, com `DATABASE_URL` apontando para o PostgreSQL privado, antes de trocar a API. O comando instala as tabelas adicionais e o catálogo inicial em uma transação, sem alterar as tabelas de adoção. Não reutilize o banco de produção para os testes: utilize um PostgreSQL temporário em rede Docker isolada. Consulte [LOJA_BANCO.md](LOJA_BANCO.md) para estrutura, endpoints e limites da implementação.
+
 Use `docker compose ... logs --tail 100 api jobs proxy` para diagnóstico; não compartilhe logs com dados pessoais. Acesso HTTP não é registrado pelo proxy/API, mas erros ainda podem conter informações sensíveis. Os logs Docker têm rotação. Monitore disponibilidade externa, CPU/RAM, espaço em disco, certificados e sucesso dos backups; configure notificações de falha. Mantenha sistema, Docker e imagens atualizados após testar. Para versões reproduzíveis, fixe os digests das imagens de PostgreSQL/Caddy da release homologada e registre-os; os tags deste modelo recebem atualizações.
 
 Os backups são ignorados pelo Git e pelo contexto de build Docker. Um arquivo `.env` em produção continua sendo um segredo sob sua responsabilidade. Nenhuma porta de banco precisa ficar aberta na internet para manutenção: use SSH e `docker compose exec`.

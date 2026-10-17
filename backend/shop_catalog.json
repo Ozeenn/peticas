@@ -1,0 +1,90 @@
+[
+  {
+    "id": "marina",
+    "name": "Marina",
+    "style": "Círculo dourado",
+    "color": "Preta",
+    "image": "assets/loja/camisa-marina.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "mafaldo",
+    "name": "Mafaldo",
+    "style": "Moldura vintage",
+    "color": "Preta",
+    "image": "assets/loja/camisa-mafaldo.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "miguel",
+    "name": "Miguel",
+    "style": "Listras verdes",
+    "color": "Clara",
+    "image": "assets/loja/camisa-miguel.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "tony",
+    "name": "Tony",
+    "style": "I love all cats and some people",
+    "color": "Clara",
+    "image": "assets/loja/camisa-tony.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "matilda",
+    "name": "Matilda",
+    "style": "Quatro momentos",
+    "color": "Clara",
+    "image": "assets/loja/camisa-matilda.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "vitor",
+    "name": "Vitor",
+    "style": "Olhar curioso",
+    "color": "Preta",
+    "image": "assets/loja/camisa-vitor.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "iris",
+    "name": "Íris",
+    "style": "Retrato",
+    "color": "Preta",
+    "image": "assets/loja/camisa-iris.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "um-gato-leva-o-outro",
+    "name": "Um gato leva o outro",
+    "style": "A turma do Peticas",
+    "color": "Clara",
+    "image": "assets/loja/camisa-um-gato-leva-o-outro.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "james-surtei",
+    "name": "James",
+    "style": "Surtei e mordi todo mundo",
+    "color": "Preta",
+    "image": "assets/loja/camisa-james-surtei.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "james-paz",
+    "name": "James",
+    "style": "A paz não é uma opção",
+    "color": "Clara",
+    "image": "assets/loja/camisa-james-paz.jpg",
+    "priceCents": 4999
+  },
+  {
+    "id": "james-retrato",
+    "name": "James",
+    "style": "Retrato na moldura",
+    "color": "Preta",
+    "image": "assets/loja/camisa-james-retrato.jpg",
+    "priceCents": 4999
+  }
+]

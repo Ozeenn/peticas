@@ -3,7 +3,7 @@ import hashlib
 import json
 from .security import fail, text, email, now, uid
 
-TEMPLATE_VERSION='2026-10-16.3'
+TEMPLATE_VERSION='2026-10-16.4'
 DEFAULTS={'controller':'Gatil Peticas','identifier':'','address':'','contact':'','retention':'A conservação dos registros considera a finalidade de cada atendimento e as obrigações aplicáveis. Pedidos de eliminação podem ser registrados no formulário de privacidade.'}
 
 
@@ -16,7 +16,7 @@ def notice(db):
     c=config(db)
     sections=[
         ('Uso do site','Esta política abrange a navegação no Peticas, o contato com a equipe, as candidaturas e o acesso de voluntários e da responsável. Cada recurso utiliza os dados necessários à sua finalidade. O aceite dos Termos de Uso e a ciência desta política não autorizam publicidade nem substituem escolhas específicas, como a autorização opcional do vídeo.'),
-        ('Armazenamento no navegador','O site utiliza um cookie de sessão para o acesso da equipe e armazenamento local para lembrar a versão dos termos e da política reconhecida neste navegador. Essa preferência contém a versão e a data do aceite, sem dados da candidatura. O carrinho também guarda neste navegador as estampas, os tamanhos e as quantidades escolhidos, sem dados de identificação ou pagamento. Você pode esvaziar o carrinho, revisar os documentos pelo rodapé ou remover esses registros nas configurações do navegador.'),
+        ('Armazenamento no navegador','O site utiliza um cookie de sessão para o acesso da equipe e armazenamento local para lembrar a versão dos termos e da política reconhecida neste navegador. Essa preferência contém a versão e a data do aceite, sem dados da candidatura. O carrinho guarda no navegador e no servidor as estampas, os tamanhos e as quantidades escolhidos, sem dados de identificação ou pagamento. Uma referência privada neste navegador permite recuperar a seleção; não a compartilhe. O acesso ao carrinho no servidor expira após 30 dias sem atualização. Você pode esvaziar o carrinho, revisar os documentos pelo rodapé ou remover esses registros nas configurações do navegador.'),
         ('Responsável e contato',f"Responsável pelo tratamento: {c['controller']}. Endereço: {c['address'] or 'Av. Santana, 720 - Centro, Botucatu - SP, 18600-020'}. Canal para direitos: {c['contact'] or 'formulário de pedidos de privacidade disponível neste site'}. A identificação documental da responsável é utilizada nos termos internos e não é exposta neste aviso."),
         ('Dados e finalidades','Nome, CPF, idade, contato, endereço e respostas sobre a segurança do lar são usados para avaliar a candidatura solicitada, combinar a visita, formalizar e acompanhar a adoção. A ciência desta política informa esse uso e não autoriza outras finalidades.'),
         ('Vídeo da residência - consentimento separado','O envio de vídeo é opcional. Com autorização específica, o vídeo é acessado pela responsável para avaliar a proteção do lar. Não filme rostos, documentos, conversas ou dados de terceiros. Recusar ou revogar essa autorização não impede a candidatura; a equipe pode combinar uma visita ou outra forma adequada de avaliação. O material não será usado para publicidade.'),

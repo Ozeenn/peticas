@@ -45,7 +45,7 @@ adminShell=function(){
 const requirementsPriorRender=render;
 render=function(){
  if(!ready)return;
- if(['public','tracking','shop'].includes(view)){$('#app').innerHTML=publicShell();bindFilters();return;}
+ if(['public','tracking','shop','cart'].includes(view)){$('#app').innerHTML=publicShell();bindFilters();return;}
  if(view==='forgot'){requirementsPriorRender();return;}
  if(!activeAccount()){$('#app').innerHTML=authPage();return;}
  if(!allowedViews().includes(view))view=['health','cats','guide'].find(v=>allowedViews().includes(v))||'guide';

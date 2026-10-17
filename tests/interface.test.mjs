@@ -16,13 +16,14 @@ test('Final interface loads in script order and respects navigation permissions'
  evaluate("editCat(null)");assert.match(elements.get('#modal').innerHTML,/Enviar para aprovação/);
  evaluate("account={role:'staff',name:'Reader',permissions:['medical.read']};view='health';render()");assert.match(elements.get('.content').innerHTML,/Checklist das medicações/);assert.doesNotMatch(elements.get('#app').innerHTML,/go\('cats'\)/);
  evaluate("view='public';render()");assert.match(elements.get('#app').innerHTML,/não recebe doações de ração/);assert.doesNotMatch(elements.get('#app').innerHTML,/esboço|dados fictícios|animais e candidaturas fictícios|demonstração/i);
- evaluate("account=null;view='shop';render()");assert.match(elements.get('#app').innerHTML,/Camisas personalizadas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Canecas|Encomendas:|23\/10|Onze estampas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Entrar no Peticas|name="password"|Encomendar|Pagar|Comprar agora/);assert.match(elements.get('#app').innerHTML,/R\$ 49,99/);assert.match(elements.get('#app').innerHTML,/name="size" required/);assert.match(elements.get('#app').innerHTML,/Adicionar ao carrinho/);assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,11);
+ evaluate("account=null;view='shop';render()");assert.match(elements.get('#app').innerHTML,/Camisas personalizadas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Canecas|Encomendas:|23\/10|Onze estampas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Entrar no Peticas|name="password"|Encomendar|Pagar|Comprar agora/);assert.match(elements.get('#app').innerHTML,/R\$\s49,99/);assert.match(elements.get('#app').innerHTML,/name="size" required/);assert.match(elements.get('#app').innerHTML,/Adicionar ao carrinho/);assert.doesNotMatch(elements.get('#app').innerHTML,/id="shop-cart"/);assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,11);
  for(const shirt of evaluate('shopShirts'))assert.ok(fs.existsSync('public/'+evaluate('shopShirtImage('+JSON.stringify(shirt)+')')));
  evaluate("setShopColor('Preta')");assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,6);
  evaluate("setShopColor('Clara')");assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,5);
  evaluate("setShopColor('Todas');showShopPhoto('james-paz')");assert.match(elements.get('#modal').innerHTML,/camisa-james-paz.jpg/);
  evaluate('showShopSizeGuide()');assert.match(elements.get('#modal').innerHTML,/49 cm/);assert.match(elements.get('#modal').innerHTML,/Como medir/);assert.doesNotMatch(elements.get('#modal').innerHTML,/23\/10|tabela-medidas.jpg/);
  assert.doesNotMatch(evaluate('privacyContents()'),/Modelo para revisão|deve completar/);
+ evaluate("account=null;view='cart';render()");assert.equal(evaluate('view'),'cart');assert.match(elements.get('#app').innerHTML,/id="shop-cart"/);assert.match(elements.get('#app').innerHTML,/Continuar escolhendo/);assert.match(elements.get('#app').innerHTML,/class="public-tab active" aria-current="page" onclick="openShopCart/);assert.doesNotMatch(elements.get('#app').innerHTML,/data-shirt=|name="password"/);
  evaluate("account={role:'admin',name:'Cris',permissions:[]};view='settings';render()");assert.match(elements.get('.content').innerHTML,/aguardando configuração/);
 });
 
@@ -158,4 +159,28 @@ test('Cart groups shirt sizes, persists choices and calculates totals from trust
  saved.set('peticas:cart:v1','invalid JSON');run=create();assert.equal(run('shopCartCount()'),0);
  run("localStorage.setItem=()=>{throw Error('blocked')};addShopCartItem('miguel','GG')");
  assert.equal(run('shopCartCount()'),1);assert.equal(run('shopCartMemoryOnly'),true);
+});
+
+test('Server cart synchronizes queued sizes, restores its private reference and retries failed saves',async()=>{
+ const saved=new Map(),requests=[];let items=[],version=0,failWrites=false;
+ const api=async(path,method='GET',body)=>{
+  requests.push({path,method,body});
+  if(path==='shop/products')return {products:[{id:'marina',name:'Marina',style:'Círculo dourado',color:'Preta'}],variants:['P','M','G','GG'].map(size=>({id:'marina',size,unitPriceCents:6000}))};
+  if(method==='PUT'&&failWrites)throw new Error('Falha de conexão de teste');
+  if(method==='POST'&&path==='shop/cart'){items=body.items;version=0;return {token:'a'.repeat(64),version,items:items.map(i=>({...i,unitPriceCents:6000}))};}
+  if(method==='PUT'){assert.equal(body.version,version);items=body.items;version++;}
+  return {version,items:items.map(i=>({...i,unitPriceCents:6000}))};
+ };
+ const create=()=>{
+  const context=vm.createContext({console,api,loadData:async()=>{},publicPage:()=>'',publicShell:()=>'',window:{addEventListener(){}},$:()=>null,document:{querySelectorAll:()=>[]},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value),removeItem:key=>saved.delete(key)}});
+  vm.runInContext(fs.readFileSync('public/shop.js','utf8'),context);
+  return source=>vm.runInContext(source,context);
+ };
+ let run=create();await run('loadData()');run("addShopCartItem('marina','M');addShopCartItem('marina','G')");await run('shopCartSync');
+ assert.equal(run('shopCartCount()'),2);assert.equal(run('shopCartTotal()'),12000);assert.equal(version,1);
+ assert.equal(requests.filter(r=>r.path==='shop/cart'&&r.method==='POST').length,1);
+ run=create();await run('loadData()');assert.equal(run('shopCartCount()'),2);assert.equal(run('shopServerVersion'),1);
+ failWrites=true;run('setShopCartQuantity(0,2)');await run('shopCartSync');assert.match(run('shopCartSyncError'),/conexão/);
+ run=create();await run('loadData()');assert.equal(run('shopCartCount()'),3);assert.match(run('shopCartSyncError'),/alterações locais/);
+ failWrites=false;await run('retryShopCartSync()');assert.equal(run('shopCartTotal()'),18000);assert.equal(run('shopCartSyncError'),'');
 });
