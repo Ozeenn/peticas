@@ -140,3 +140,11 @@ body:has(.site-acceptance){padding-bottom:240px}
 .shop-size-guide .text-btn{margin-top:18px}.shop-mugs{display:flex;align-items:center;justify-content:space-between;gap:20px}.shop-mugs h2{margin-top:10px}
 @media(max-width:1000px){.shop-shirt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:550px){.shop-shirt-grid{grid-template-columns:1fr}.shop-collection-info{padding:18px}.shop-catalog-head{align-items:flex-start}.shop-mugs{align-items:flex-start;flex-direction:column}}
+.shop-add-form{display:grid;gap:14px;margin-top:20px}.shop-add-form label{display:grid;gap:7px}.shop-add-form .btn{width:100%}
+.shop-cart{scroll-margin-top:24px}.shop-cart-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.shop-cart-items{list-style:none;margin:20px 0;padding:0}.shop-cart-item{display:flex;align-items:center;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.shop-cart-item>img{width:90px;height:90px;object-fit:contain;background:#faf8f4;border-radius:12px;flex-shrink:0}
+.shop-cart-description{flex:1;min-width:0}.shop-cart-description p{margin:6px 0}.shop-cart-description small{display:block;margin-top:6px;color:var(--muted)}
+.shop-cart-controls{display:grid;justify-items:end;gap:10px}.shop-cart-controls label{display:grid;gap:6px;font-size:13px}.shop-cart-controls input{width:90px}
+.shop-cart-total{display:flex;justify-content:space-between;gap:16px;margin:22px 0 14px;color:var(--navy);font-size:22px}
+@media(max-width:600px){.shop-cart-item{flex-wrap:wrap;gap:14px}.shop-cart-item>img{width:72px;height:72px}.shop-cart-controls{width:100%;grid-template-columns:1fr 1fr;align-items:center;justify-items:start}.shop-cart-controls .text-btn{justify-self:end}.shop-cart-total{font-size:19px}}

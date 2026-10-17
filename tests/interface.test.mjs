@@ -16,7 +16,7 @@ test('Final interface loads in script order and respects navigation permissions'
  evaluate("editCat(null)");assert.match(elements.get('#modal').innerHTML,/Enviar para aprovação/);
  evaluate("account={role:'staff',name:'Reader',permissions:['medical.read']};view='health';render()");assert.match(elements.get('.content').innerHTML,/Checklist das medicações/);assert.doesNotMatch(elements.get('#app').innerHTML,/go\('cats'\)/);
  evaluate("view='public';render()");assert.match(elements.get('#app').innerHTML,/não recebe doações de ração/);assert.doesNotMatch(elements.get('#app').innerHTML,/esboço|dados fictícios|animais e candidaturas fictícios|demonstração/i);
- evaluate("account=null;view='shop';render()");assert.match(elements.get('#app').innerHTML,/Camisas personalizadas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Canecas|Encomendas:|23\/10/);assert.doesNotMatch(elements.get('#app').innerHTML,/Entrar no Peticas|name="password"|onsubmit=|Encomendar|Pagar|Comprar agora/);assert.match(elements.get('#app').innerHTML,/R\$ 49,99/);assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,11);
+ evaluate("account=null;view='shop';render()");assert.match(elements.get('#app').innerHTML,/Camisas personalizadas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Canecas|Encomendas:|23\/10|Onze estampas/);assert.doesNotMatch(elements.get('#app').innerHTML,/Entrar no Peticas|name="password"|Encomendar|Pagar|Comprar agora/);assert.match(elements.get('#app').innerHTML,/R\$ 49,99/);assert.match(elements.get('#app').innerHTML,/name="size" required/);assert.match(elements.get('#app').innerHTML,/Adicionar ao carrinho/);assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,11);
  for(const shirt of evaluate('shopShirts'))assert.ok(fs.existsSync('public/'+evaluate('shopShirtImage('+JSON.stringify(shirt)+')')));
  evaluate("setShopColor('Preta')");assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,6);
  evaluate("setShopColor('Clara')");assert.equal((elements.get('#app').innerHTML.match(/data-shirt=/g)||[]).length,5);
@@ -134,4 +134,28 @@ test('General terms acceptance remembers the version, renews on changes and tole
  assert.equal(run('siteAcceptancePending()'),false);
  run("siteAcceptanceSession=''");
  assert.equal(run('siteAcceptancePending()'),true);
+});
+
+test('Cart groups shirt sizes, persists choices and calculates totals from trusted unit prices',()=>{
+ const saved=new Map();
+ const create=()=>{
+  const context=vm.createContext({console,publicPage:()=>'',publicShell:()=>'',window:{addEventListener(){}},$:()=>null,document:{querySelectorAll:()=>[]},localStorage:{getItem:key=>saved.get(key)||null,setItem:(key,value)=>saved.set(key,value)}});
+  vm.runInContext(fs.readFileSync('public/shop.js','utf8'),context);
+  return source=>vm.runInContext(source,context);
+ };
+ let run=create();
+ assert.throws(()=>run("addShopCartItem('marina','')"),/tamanho/);
+ assert.throws(()=>run("addShopCartItem('unknown','M')"),/catálogo/);
+ run("addShopCartItem('marina','M');addShopCartItem('marina','M');addShopCartItem('marina','G')");
+ assert.equal(run('shopCart.length'),2);assert.equal(run('shopCartCount()'),3);assert.equal(run('shopCartTotal()'),14997);
+ run('setShopCartQuantity(0,3)');assert.equal(run('shopCartTotal()'),19996);
+ for(const quantity of [0,-1,1.5,100])assert.throws(()=>run('setShopCartQuantity(0,'+quantity+')'),/quantidade/);
+ run=create();assert.equal(run('shopCartCount()'),4);assert.equal(run("shopCart[0].size"),'M');
+ run('removeShopCartItem(0)');assert.equal(run('shopCartTotal()'),4999);assert.equal(run('shopCart[0].size'),'G');
+ run('clearShopCart()');run=create();assert.equal(run('shopCartCount()'),0);
+ saved.set('peticas:cart:v1',JSON.stringify({version:1,items:[{id:'marina',size:'M',quantity:1,price:1},{id:'marina',size:'M',quantity:2},{id:'unknown',size:'P',quantity:1},{id:'marina',size:'XXL',quantity:1},{id:'marina',size:'P',quantity:-1}]}));
+ run=create();assert.equal(run('shopCart.length'),1);assert.equal(run('shopCartTotal()'),14997);assert.equal(run("'price' in shopCart[0]"),false);
+ saved.set('peticas:cart:v1','invalid JSON');run=create();assert.equal(run('shopCartCount()'),0);
+ run("localStorage.setItem=()=>{throw Error('blocked')};addShopCartItem('miguel','GG')");
+ assert.equal(run('shopCartCount()'),1);assert.equal(run('shopCartMemoryOnly'),true);
 });

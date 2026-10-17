@@ -6,7 +6,7 @@ Modelo de organização preparado para revisão pela responsável do Gatil Petic
 
 O site apresenta um aviso geral com acesso aos Termos de Uso e à Política de Privacidade, inclusive fora do fluxo de adoção. O botão de aceite lembra a versão e a data neste navegador, em `localStorage`, sem identificar a pessoa nem criar um registro no banco. Se o armazenamento estiver indisponível, a preferência dura apenas na sessão aberta. A navegação e a leitura dos documentos continuam disponíveis; o rodapé permite revisar o aceite. Uma nova versão dos documentos faz o aviso reaparecer.
 
-A aba pública `#shop` apresenta o catálogo de estampas das camisas e a tabela de medidas fornecidos pelo gatil. O catálogo não registra pedidos, estoque ou pagamento, nem coleta dados de compra. As imagens são arquivos públicos do site; não contêm dados de candidatos.
+A aba pública `#shop` apresenta o catálogo de estampas das camisas e a tabela de medidas fornecidos pelo gatil. O carrinho lembra localmente estampas, tamanhos e quantidades na chave `peticas:cart:v1`, sem identificação do visitante. O catálogo não registra pedidos, estoque ou pagamento no servidor. As imagens são arquivos públicos do site; não contêm dados de candidatos.
 
 Na candidatura, o aceite dos termos e a ciência da política permanecem explícitos. O registro versionado no banco preserva ambos os textos no mesmo snapshot. Os aceites anteriores continuam associados aos documentos que foram apresentados na ocasião; o aceite geral do navegador não marca automaticamente as escolhas do formulário nem autoriza vídeo. O site utiliza cookie de sessão para o acesso da equipe; o aviso não inclui categorias de rastreamento ou publicidade.
 
